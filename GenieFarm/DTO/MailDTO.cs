@@ -53,3 +53,16 @@ public class ResMailSendDTO : ErrorCodeDTO
 {
 
 }
+
+
+// MailReceive : 우편 아이템 수령
+
+public class ReqMailReceiveDTO : InGameDTO
+{
+    public Int64 MailID { get; set; }
+}
+
+public class ResMailReceiveDTO : ErrorCodeDTO
+{
+
+}

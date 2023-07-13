@@ -55,23 +55,33 @@ public class MailController : ControllerBase
 
 
     [HttpDelete("delete")]
-    public async Task<ErrorCodeDTO> Delete(ReqMailDeleteDTO request)
+    public async Task<ResMailDeleteDTO> Delete(ReqMailDeleteDTO request)
     {
         // 우편 삭제
         if (!await _gameDb.DeleteMail(request.UserID, request.MailID))
         {
-            return new ErrorCodeDTO() { Result = ErrorCode.MailNotExists };
+            return new ResMailDeleteDTO() { Result = ErrorCode.MailNotExists };
         }
 
-        return new ErrorCodeDTO() { Result = ErrorCode.None };
+        return new ResMailDeleteDTO() { Result = ErrorCode.None };
     }
 
 
     [HttpPost("send")]
-    public async Task<ErrorCodeDTO> Send(ReqMailSendDTO request)
+    public async Task<ResMailSendDTO> Send(ReqMailSendDTO request)
     {
         var errorCode = await _gameDb.SendMail(request);
         
-        return new ErrorCodeDTO() { Result = errorCode };
+        return new ResMailSendDTO() { Result = errorCode };
+    }
+
+
+    [HttpPost("receive")]
+    public async Task<ResMailReceiveDTO> Receive(ReqMailReceiveDTO request)
+    {
+        // 우편 수령
+        var errorCode = await _gameDb.ReceiveMail(request.UserID, request.MailID);
+
+        return new ResMailReceiveDTO() { Result = errorCode };
     }
 }

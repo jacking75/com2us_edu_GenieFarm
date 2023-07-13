@@ -20,4 +20,6 @@ public enum ErrorCode : UInt16
     MailReceiverNotExists = 27,
     MailSenderNotOwnItem = 28,
     MailItemRollbackFailed = 29,
+    MailItemNotExists = 30,
+    MailItemReceiveFail = 31,
 }

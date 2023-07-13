@@ -17,4 +17,5 @@ public interface IGameDb
     public Task<MailModel> GetMail(Int64 userId, Int64 mailId);
     public Task<Boolean> DeleteMail(Int64 userId, Int64 mailId);
     public Task<ErrorCode> SendMail(ReqMailSendDTO request);
+    public Task<ErrorCode> ReceiveMail(Int64 userId, Int64 mailId);
 }

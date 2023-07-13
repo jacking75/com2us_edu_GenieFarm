@@ -9,7 +9,7 @@ public partial class GameDb : IGameDb
     public async Task<List<MailModel>> OpenMail(Int64 userId, Int32 page)
     {
         // 페이지에 해당하는 메일 불러오기
-        var query = _queryFactory.Query("mail_info").Where("UserId", userId).Where("IsDeleted", false).Where("ExpiredAt", ">", DateTime.Now).Offset((page - 1) * 20).Limit(20);
+        var query = _queryFactory.Query("mail_info").Where("ReceiverId", userId).Where("IsDeleted", false).Where("ExpiredAt", ">", DateTime.Now).Offset((page - 1) * 20).Limit(20);
         var result = await query.GetAsync<MailModel>();
         _logger.LogInformation("[GameDb.OpenMail] Mail Count: {0}", result.Count());
         var mailList = result.ToList();
@@ -20,7 +20,7 @@ public partial class GameDb : IGameDb
 
     public async Task<MailModel> GetMail(Int64 userId, Int64 mailId)
     {
-        var query = _queryFactory.Query("mail_info").Where("UserId", userId).Where("MailId", mailId).Where("ExpiredAt", ">", DateTime.Now);
+        var query = _queryFactory.Query("mail_info").Where("ReceiverId", userId).Where("MailId", mailId).Where("ExpiredAt", ">", DateTime.Now);
         var result = await query.GetAsync<MailModel>();
 
         // 가져온 메일에 대해 읽음 처리
@@ -31,7 +31,7 @@ public partial class GameDb : IGameDb
 
     public async Task<Boolean> DeleteMail(Int64 userId, Int64 mailId)
     {
-        var affectedRow = await _queryFactory.Query("mail_info").Where("MailId", mailId).Where("UserId", userId).Where("IsDeleted", false).UpdateAsync(new { IsDeleted = true });
+        var affectedRow = await _queryFactory.Query("mail_info").Where("MailId", mailId).Where("ReceiverId", userId).Where("IsDeleted", false).UpdateAsync(new { IsDeleted = true });
 
         return affectedRow == 1;
     }
@@ -82,6 +82,37 @@ public partial class GameDb : IGameDb
             }
 
             return ErrorCode.MailSendException;
+        }
+
+        return ErrorCode.None;
+    }
+
+
+    public async Task<ErrorCode> ReceiveMail(Int64 userId, Int64 mailId)
+    {
+        // 아이템 ID 가져오기
+        var query = await _queryFactory.Query("mail_info").Select("ItemId").Where("ReceiverId", userId).Where("MailId", mailId).Where("ExpiredAt", ">", DateTime.Now).Where("IsReceived", false).Where("IsDeleted", false).GetAsync<Int64>();
+        var itemId = query.FirstOrDefault();
+        if (itemId == 0)
+        {
+            return ErrorCode.MailItemNotExists;
+        }
+
+        // 아이템 소유권 변경
+        var itemQuery = await _queryFactory.Query("farm_item").Where("ItemId", itemId).Where("OwnerId", 0).UpdateAsync(new { OwnerId = userId });
+        if (itemQuery == 0)
+        {
+            return ErrorCode.MailItemNotExists;
+        }
+
+        // 메일 아이템 수령완료 처리
+        var receiveQuery = await _queryFactory.Query("mail_info").Where("ReceiverId", userId).Where("MailId", mailId).Where("ExpiredAt", ">", DateTime.Now).Where("IsReceived", false).Where("IsDeleted", false).UpdateAsync(new { IsReceived = true, ItemId = 0 });
+        if (receiveQuery == 0)
+        {
+            // 아이템 소유권 롤백
+            var itemRollbackQuery = await _queryFactory.Query("farm_item").Where("ItemId", itemId).Where("OwnerId", userId).UpdateAsync(new { OwnerId = 0 });
+
+            return ErrorCode.MailItemReceiveFail;
         }
 
         return ErrorCode.None;
