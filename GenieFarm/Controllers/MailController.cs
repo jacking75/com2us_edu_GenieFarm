@@ -59,8 +59,9 @@ public class MailController : ControllerBase
             await _gameDb.SendMail(request);
             return new ResultResponse() { Result = ErrorCode.None };
         }
-        catch
+        catch (Exception e)
         {
+            _logger.LogInformation(e.Message);
             return new ResultResponse() { Result = ErrorCode.MailSendException };
         }
     }
