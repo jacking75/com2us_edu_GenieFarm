@@ -1,4 +1,4 @@
-public class UserData
+public class AccountModel
 {
     public Int64 UserId { get; set; }
     public String AuthId { get; set; }

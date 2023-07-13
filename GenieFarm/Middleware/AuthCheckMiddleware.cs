@@ -7,7 +7,7 @@ public class AuthCheckMiddleware
     private readonly IRedisDb _redisDb;
     private HashSet<String> _exceptPath = new HashSet<String>()
     {
-        "/api/user/login", "/api/user/logout", "/api/user/register", "/api/user/nickname"
+        "/api/account/login", "/api/account/logout", "/api/account/register", "/api/account/nickname"
     };
 
     public AuthCheckMiddleware(RequestDelegate next, ILogger<AuthCheckMiddleware> logger, IRedisDb redisDb)
@@ -33,17 +33,14 @@ public class AuthCheckMiddleware
         {
             // Body를 여러 번 읽기 위해 Buffering 설정
             context.Request.EnableBuffering();
-
-            // StreamReader 생성
             var bodyStream = new StreamReader(context.Request.Body);
             var rawBody = await bodyStream.ReadToEndAsync();
             _logger.LogInformation("[AuthCheckMiddleware.Invoke] Raw Body : {}", rawBody);
-            // Stream Position 리셋 (다음에 다시 읽을 수 있도록)
             context.Request.Body.Position = 0;
 
-            // JSON 포맷 유효성 검사
-            // 포맷 검사를 하면서, AuthID값과 authToken값을 가져옴
-            if (!IsValidFormat(rawBody, out String? authID, out String? authToken, out Int64 userId))
+
+            // JSON 포맷 유효성 검사 : AuthID값과 authToken값을 가져옴
+            if (!IsValidFormattedJSON(rawBody, out String? authID, out String? authToken, out Int64 userId))
             {
                 context.Response.StatusCode = 400;
                 return;
@@ -57,7 +54,7 @@ public class AuthCheckMiddleware
             }
 
             // 중복 요청 검사
-            if (await IsOverlapRequest(authToken, path))
+            if (await IsOverlappedRequest(authToken, path))
             {
                 _logger.LogInformation("[AuthCheckMiddleware.Invoke] Overlapped Request");
                 context.Response.StatusCode = 429;
@@ -65,11 +62,13 @@ public class AuthCheckMiddleware
             }
 
             await _next(context);
+
+            // 중복 요청 방지 해제
             await _redisDb.ReleaseRequest(authToken, path);
         }
     }
 
-    private async Task<bool> IsOverlapRequest(String? authToken, String? path)
+    private async Task<bool> IsOverlappedRequest(String? authToken, String? path)
     {
         if (!await _redisDb.AcquireRequest(authToken, path))
         {
@@ -109,7 +108,7 @@ public class AuthCheckMiddleware
         return true;
     }
 
-    private bool IsValidFormat(String rawBody, out String? authID, out String? authToken, out Int64 userId)
+    private bool IsValidFormattedJSON(String rawBody, out String? authID, out String? authToken, out Int64 userId)
     {
         try
         {

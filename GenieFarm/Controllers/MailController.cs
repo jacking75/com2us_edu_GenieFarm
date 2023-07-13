@@ -15,54 +15,63 @@ public class MailController : ControllerBase
         _gameDb = GameDb;
     }
 
+
     [HttpPost("open")]
-    public async Task<MailOpenResponse> Open(MailOpenRequest request)
+    public async Task<ResMailOpenDTO> Open(ReqMailOpenDTO request)
     {
+        // 페이지 번호가 유효한지 확인
         if (request.Page < 1)
         {
-            return new MailOpenResponse() { Result = ErrorCode.InvalidMailPage, Page = request.Page };
+            return new ResMailOpenDTO() { Result = ErrorCode.InvalidMailPage, Page = request.Page };
         }
-        List<MailData> mailList = await _gameDb.OpenMail(request.UserID, request.Page);
+
+        // 페이지 번호에 해당하는 우편 리스트 로드
+        var mailList = await _gameDb.OpenMail(request.UserID, request.Page);
+
+        // 우편 리스트가 비어있다면 존재하지 않는 페이지
         if (mailList == null || mailList.Count == 0)
         {
-            return new MailOpenResponse() { Result = ErrorCode.MailOpenException, Page = request.Page };
+            return new ResMailOpenDTO() { Result = ErrorCode.MailPageNotExists, Page = request.Page };
         }
-        return new MailOpenResponse() { Result = ErrorCode.None, Mails = mailList, Page = request.Page };
+
+        return new ResMailOpenDTO() { Result = ErrorCode.None, MailList = mailList, Page = request.Page };
     }
+
 
     [HttpPost("read")]
-    public async Task<MailDataResponse> Read(MailDataRequest request)
+    public async Task<ResMailInfoDTO> Read(ReqMailInfoDTO request)
     {
-        MailData mailData = await _gameDb.GetMail(request.UserID, request.MailID);
+        // 단일 우편 로드
+        var mailData = await _gameDb.GetMail(request.UserID, request.MailID);
+
+        // 우편이 존재하지 않음
         if (mailData == null)
         {
-            return new MailDataResponse() { Result = ErrorCode.MailNotExists };
+            return new ResMailInfoDTO() { Result = ErrorCode.MailNotExists };
         }
-        return new MailDataResponse() { Result = ErrorCode.None, Mail = mailData };
+
+        return new ResMailInfoDTO() { Result = ErrorCode.None, Mail = mailData };
     }
+
 
     [HttpDelete("delete")]
-    public async Task<ResultResponse> Delete(MailDeleteRequest request)
+    public async Task<ErrorCodeDTO> Delete(ReqMailDeleteDTO request)
     {
+        // 우편 삭제
         if (!await _gameDb.DeleteMail(request.UserID, request.MailID))
         {
-            return new ResultResponse() { Result = ErrorCode.MailNotExists };
+            return new ErrorCodeDTO() { Result = ErrorCode.MailNotExists };
         }
-        return new ResultResponse() { Result = ErrorCode.None };
+
+        return new ErrorCodeDTO() { Result = ErrorCode.None };
     }
 
+
     [HttpPost("send")]
-    public async Task<ResultResponse> Send(MailSendRequest request)
+    public async Task<ErrorCodeDTO> Send(ReqMailSendDTO request)
     {
-        try
-        {
-            await _gameDb.SendMail(request);
-            return new ResultResponse() { Result = ErrorCode.None };
-        }
-        catch (Exception e)
-        {
-            _logger.LogInformation(e.Message);
-            return new ResultResponse() { Result = ErrorCode.MailSendException };
-        }
+        var errorCode = await _gameDb.SendMail(request);
+        
+        return new ErrorCodeDTO() { Result = errorCode };
     }
 }

@@ -13,32 +13,38 @@ public class AttendanceController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<AttendanceResponse> Attend([FromBody] AttendanceRequest request)
+    public async Task<ResAttendDTO> Attend(ReqAttendDTO request)
     {
-        // 출석체크가 가능한지 확인한다.
-        var lastAttendanceData = await _gameDb.GetAttendanceData(request.UserID);
+        // 마지막 출석 날짜 로드
+        var lastAttendData = await _gameDb.GetAttendanceData(request.UserID);
 
-        TimeSpan diff = TimeSpan.FromDays(1);
-        if (lastAttendanceData.LastAttendance != null)
+        // 출석 가능한지 체크
+        if (lastAttendData.LastAttendance == null || IsAnotherDay(lastAttendData.LastAttendance))
         {
-            DateTime lastAttendanceDateShort = DateTime.Parse(lastAttendanceData.LastAttendance.ToShortDateString());
-            DateTime currentDateShort = DateTime.Parse(DateTime.Now.ToShortDateString());
-            diff = currentDateShort - lastAttendanceDateShort;
-        }
+            if (!await _gameDb.Attend(request.UserID))
+            {
+                // 출석 실패
+                return new ResAttendDTO() { Result = ErrorCode.AttendException };
+            }
 
-        if (diff > TimeSpan.FromDays(0))
-        {
-            // 출석 가능
-            var affectedRow = await _gameDb.Attend(request.UserID);
-            _logger.LogInformation("[AttendanceController.Attend] AffectedRow : {}", affectedRow);
-
-            // TODO : 아이템 보상 지급
-            return new AttendanceResponse() { Result = ErrorCode.None };
+            // TODO : 출석 보상 지급
+            return new ResAttendDTO() { Result = ErrorCode.None, AttendanceCount = (Int16)(lastAttendData.AttendanceCount + 1) };
         }
         else
         {
             // 출석 불가능
-            return new AttendanceResponse() { Result = ErrorCode.AlreadyAttended };
+            return new ResAttendDTO() { Result = ErrorCode.AlreadyAttended };
         }
+    }
+
+
+    Boolean IsAnotherDay(DateTime lastAttendDate)
+    {
+        // 현재 날짜와 마지막 출석 날짜가 1일 이상 차이가 나면 True
+        var currentDate = DateTime.Parse(DateTime.Now.ToShortDateString());
+        lastAttendDate = DateTime.Parse(lastAttendDate.ToShortDateString());
+        var diff = currentDate - lastAttendDate;
+
+        return diff > TimeSpan.FromDays(0);
     }
 }
