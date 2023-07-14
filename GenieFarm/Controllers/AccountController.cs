@@ -84,7 +84,7 @@ public class AccountController : ControllerBase
     [HttpPost("logout")]
     public async Task<ResLogoutDTO> Logout(ReqLogoutDTO request)
     {
-        if (!await _redisDb.DeleteAsync(request.AuthID))
+        if (!await _redisDb.DeleteSessionDataAsync(request.AuthID, request.AuthToken, request.UserID))
         {
             return new ResLogoutDTO() { Result = ErrorCode.LogoutFail };
         }

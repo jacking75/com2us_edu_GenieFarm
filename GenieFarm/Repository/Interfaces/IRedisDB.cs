@@ -6,4 +6,5 @@ public interface IRedisDb
     public Task<bool> DeleteAsync(string key);
     public Task<bool> AcquireRequest(string authToken, string path);
     public Task<bool> ReleaseRequest(string authToken, string path);
+    public Task<bool> DeleteSessionDataAsync(string authId, string authToken, Int64 userId);
 }

@@ -11,7 +11,6 @@ public partial class GameDb : IGameDb
         // 페이지에 해당하는 메일 불러오기
         var query = _queryFactory.Query("mail_info").Where("ReceiverId", userId).Where("IsDeleted", false).Where("ExpiredAt", ">", DateTime.Now).Offset((page - 1) * 20).Limit(20);
         var result = await query.GetAsync<MailModel>();
-        _logger.LogInformation("[GameDb.OpenMail] Mail Count: {0}", result.Count());
         var mailList = result.ToList();
 
         return mailList;
@@ -44,7 +43,6 @@ public partial class GameDb : IGameDb
         var query = await _queryFactory.Query("user_basicinfo").Where("UserId", request.ReceiverID).GetAsync<AccountModel>();
         if (query.FirstOrDefault() == null)
         {
-            _logger.LogInformation("receiverCheck : {0}", query.FirstOrDefault());
             return ErrorCode.MailReceiverNotExists;
         }
 

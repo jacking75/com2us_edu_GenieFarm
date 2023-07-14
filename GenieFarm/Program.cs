@@ -31,9 +31,6 @@ var app = builder.Build();
 app.UseDTOLoggingMiddleware();
 app.UseAuthCheckMiddleware();
 app.UseRouting();
-app.UseEndpoints(endpoints =>
-{
-    endpoints.MapControllers();
-});
+app.MapControllers();
 
 app.Run();
