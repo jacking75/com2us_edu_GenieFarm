@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using System.Text.Json;
+using ZLogger;
 
 public class LoggingResultFilter : IActionFilter
 {
@@ -15,7 +16,13 @@ public class LoggingResultFilter : IActionFilter
     {
         if (context.Result is ObjectResult result && result.Value is ErrorCodeDTO errResult)
         {
-            //_logger.LogInformation("{0}", );
+            if (context.HttpContext.Items.TryGetValue("RequestId", out var reqId))
+            {
+                _logger.ZLogInformationWithPayload(new { RequestId = reqId, Path = context.HttpContext.Request.Path.Value, ErrorCode = errResult.Result }, "OnActionExecuted");
+            } else
+            {
+                _logger.ZLogDebugWithPayload(new { ErrorCode = errResult.Result }, "Failed To Get RequestId");
+            }
         }
     }
 

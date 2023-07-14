@@ -8,7 +8,7 @@ public class AuthCheckMiddleware
     readonly IRedisDb _redisDb;
     HashSet<string> _exceptPath = new HashSet<string>()
     {
-        "/api/account/login", "/api/account/logout", "/api/account/register", "/api/account/nickname"
+        "/api/account/login", "/api/account/register",
     };
 
     public AuthCheckMiddleware(RequestDelegate next, ILogger<AuthCheckMiddleware> logger, IRedisDb redisDb)
@@ -33,6 +33,7 @@ public class AuthCheckMiddleware
             // Request Body 로드
             if (!GetRawBody(context, out var rawBody))
             {
+                _logger.ZLogInformationWithPayload(new { RequestId = context.Items["RequestId"], StatusCode = 400 }, "GetRawBody");
                 context.Response.StatusCode = 400;
                 return;
             }
@@ -40,7 +41,7 @@ public class AuthCheckMiddleware
             // JSON 포맷 유효성 검사 : AuthID값과 authToken값을 가져옴
             if (!IsValidFormattedJSON(rawBody, out string authID, out string authToken, out Int64 userId))
             {
-                _logger.ZLogInformationWithPayload(new { RequestId = context.Items["RequestId"], IsRequest = false, StatusCode = 400 }, "IsValidFormattedJSON");
+                _logger.ZLogInformationWithPayload(new { RequestId = context.Items["RequestId"], StatusCode = 400 }, "IsValidFormattedJSON");
                 context.Response.StatusCode = 400;
                 return;
             }
@@ -48,7 +49,7 @@ public class AuthCheckMiddleware
             // 토큰 유효성 검사
             if (!await IsValidToken(authID, authToken, userId))
             {
-                _logger.ZLogInformationWithPayload(new { RequestId = context.Items["RequestId"], IsRequest = false, StatusCode = 401 }, "IsValidToken");
+                _logger.ZLogInformationWithPayload(new { RequestId = context.Items["RequestId"], StatusCode = 401 }, "IsValidToken");
                 context.Response.StatusCode = 401;
                 return;
             }
@@ -56,7 +57,7 @@ public class AuthCheckMiddleware
             // 중복 요청 검사
             if (await IsOverlappedRequest(authToken, path))
             {
-                _logger.ZLogInformationWithPayload(new { RequestId = context.Items["RequestId"], IsRequest = false, StatusCode = 429 }, "IsOverlappedRequest");
+                _logger.ZLogInformationWithPayload(new { RequestId = context.Items["RequestId"], StatusCode = 429 }, "IsOverlappedRequest");
                 context.Response.StatusCode = 429;
                 return;
             }
