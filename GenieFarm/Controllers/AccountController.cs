@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
+using Org.BouncyCastle.Asn1.Ocsp;
+using ZLogger;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -23,6 +25,7 @@ public class AccountController : ControllerBase
     [HttpPost("login")]
     public async Task<ResLoginDTO> Login(ReqLoginDTO request)
     {
+
         // 플랫폼 서버에서 받아온 인증ID와 인증토큰 체크
         if (!AuthCheck(request.AuthID, request.AuthToken))
         {
@@ -81,8 +84,10 @@ public class AccountController : ControllerBase
     [HttpPost("logout")]
     public async Task<ResLogoutDTO> Logout(ReqLogoutDTO request)
     {
-        // TODO : 실패에 대한 처리 작성
-        await _redisDb.DeleteAsync(request.AuthID);
+        if (!await _redisDb.DeleteAsync(request.AuthID))
+        {
+            return new ResLogoutDTO() { Result = ErrorCode.LogoutFail };
+        }
 
         return new ResLogoutDTO() { Result = ErrorCode.None };
     }
@@ -133,19 +138,25 @@ public class AccountController : ControllerBase
     }
 
 
-    async Task<ErrorCode> SetTokenOnRedis(String authId, String authToken, Int64 userId)
+    async Task<ErrorCode> SetTokenOnRedis(string authId, string authToken, Int64 userId)
     {
-        // TODO : Return Value(성공 여부)에 따른 처리 작성하기
         // 같은 키의 토큰이 있어도 무조건 Overwrite하여 기존 토큰을 무효화
-        await _redisDb.SetAsync(authId, authToken, TimeSpan.FromDays(7));
-        await _redisDb.SetAsync(authToken, userId, TimeSpan.FromDays(7));
+        if (!await _redisDb.SetAsync(authId, authToken, TimeSpan.FromDays(7)))
+        {
+            return ErrorCode.SessionSettingFail;
+        }
+        if (!await _redisDb.SetAsync(authToken, userId, TimeSpan.FromDays(7)))
+        {
+            return ErrorCode.SessionSettingFail;
+        }
 
         return ErrorCode.None;
     }
 
 
-    private bool VersionCheck(string appVersion, string masterVersion)
+    private bool VersionCheck(string appVersion, string masterDataVersion)
     {
+        // TODO : MasterData로부터 버전 가져와서 체크 Condition 작성해야 함
         return true;
     }
 }

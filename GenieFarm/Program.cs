@@ -1,11 +1,17 @@
 using ZLogger;
 using Cysharp.Text;
+using IdGen;
+using IdGen.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddTransient<IGameDb, GameDb>();
 builder.Services.AddSingleton<IRedisDb, RedisDb>();
-builder.Services.AddControllers();
+builder.Services.AddIdGen(0);
+builder.Services.AddControllers().AddMvcOptions(options =>
+{
+    options.Filters.Add(typeof(LoggingResultFilter));
+});
 
 // ZLogger 사용 설정
 builder.Logging.ClearProviders();
@@ -22,6 +28,7 @@ builder.Logging.AddZLoggerRollingFile((dt, x) => $"logs/{dt.ToLocalTime():yyyy-M
 
 var app = builder.Build();
 
+app.UseDTOLoggingMiddleware();
 app.UseAuthCheckMiddleware();
 app.UseRouting();
 app.UseEndpoints(endpoints =>

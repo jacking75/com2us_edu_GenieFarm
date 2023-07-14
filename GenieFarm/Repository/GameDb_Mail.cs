@@ -18,13 +18,14 @@ public partial class GameDb : IGameDb
     }
 
 
-    public async Task<MailModel> GetMail(Int64 userId, Int64 mailId)
+    public async Task<MailModel?> GetMail(Int64 userId, Int64 mailId)
     {
         var query = _queryFactory.Query("mail_info").Where("ReceiverId", userId).Where("MailId", mailId).Where("ExpiredAt", ">", DateTime.Now);
         var result = await query.GetAsync<MailModel>();
 
         // 가져온 메일에 대해 읽음 처리
-        var affectedRow = _queryFactory.Query("mail_info").Where("MailId", mailId).Update(new { IsRead = true });
+        var affectedRow = await _queryFactory.Query("mail_info").Where("MailId", mailId).UpdateAsync(new { IsRead = true });
+
         return result.FirstOrDefault();
     }
 

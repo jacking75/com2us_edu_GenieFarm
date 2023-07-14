@@ -13,11 +13,11 @@ public partial class GameDb : IGameDb
         return result == 1;
     }
 
-    public async Task<AttendanceModel> GetAttendanceData(Int64 userId)
+    public async Task<AttendanceModel?> GetAttendanceData(Int64 userId)
     {
         var query = _queryFactory.Query("user_attendance").Where("UserId", userId);
-        var result = await query.GetAsync<AttendanceModel>();
+        var result = (await query.GetAsync<AttendanceModel>()).FirstOrDefault();
 
-        return result.FirstOrDefault();
+        return result;
     }
 }

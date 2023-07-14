@@ -1,6 +1,9 @@
 public enum ErrorCode : UInt16
 {
     None = 0,
+
+    CreateRequestIDFail = 1,
+
     AuthCheckFail = 10,
     InvalidVersion = 11,
     SessionSettingFail = 12,
@@ -9,9 +12,11 @@ public enum ErrorCode : UInt16
     UserNotExists = 15,
     UserAlreadyExists = 16,
     DuplicateNickname = 17,
+    LogoutFail = 18,
 
     AlreadyAttended = 20,
     AttendException = 21,
+    AttendDataNotExists = 22,
 
     InvalidMailPage = 23,
     MailPageNotExists = 24,

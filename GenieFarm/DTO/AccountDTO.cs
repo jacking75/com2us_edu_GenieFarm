@@ -1,15 +1,22 @@
 // AccountDTO.cs : AccountController에서 사용하는 DTO 정의
 // Login : 로그인
 
+using System.ComponentModel.DataAnnotations;
+
 public class ReqLoginDTO : AuthDTO
 {
-    public String AppVersion { get; set; }
-    public String MasterDataVersion { get; set; }
+    [Required]
+    [MinLength(1, ErrorMessage = "AppVersion must be at least 1 characters long.")]
+    public string AppVersion { get; set; } = string.Empty;
+
+    [Required]
+    [MinLength(1, ErrorMessage = "MasterDataVersion must be at least 1 characters long.")]
+    public string MasterDataVersion { get; set; } = string.Empty;
 }
 
 public class ResLoginDTO : ErrorCodeDTO
 {
-    public AccountModel UserData { get; set; }
+    public AccountModel? UserData { get; set; }
 }
 
 
@@ -17,9 +24,9 @@ public class ResLoginDTO : ErrorCodeDTO
 
 public class ReqRegisterDTO : AuthDTO
 {
-    public String Nickname { get; set; }
-    public String AppVersion { get; set; }
-    public String MasterDataVersion { get; set; }
+    public string Nickname { get; set; } = string.Empty;
+    public string AppVersion { get; set; } = string.Empty;
+    public string MasterDataVersion { get; set; } = string.Empty;
 }
 
 public class ResRegisterDTO : ErrorCodeDTO
@@ -44,7 +51,7 @@ public class ResLogoutDTO : ErrorCodeDTO
 
 public class ReqChangeNicknameDTO : AuthDTO
 {
-    public String Nickname { get; set; }
+    public string Nickname { get; set; } = string.Empty;
 }
 
 public class ResChangeNicknameDTO : ErrorCodeDTO

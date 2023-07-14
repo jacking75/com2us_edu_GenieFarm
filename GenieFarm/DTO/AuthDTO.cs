@@ -2,6 +2,6 @@
 
 public class AuthDTO
 {
-    public String AuthID { get; set; }
-    public String AuthToken { get; set; }
+    public string AuthID { get; set; } = string.Empty;
+    public string AuthToken { get; set; } = string.Empty;
 }

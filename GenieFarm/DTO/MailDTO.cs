@@ -8,7 +8,7 @@ public class ReqMailInfoDTO : InGameDTO
 
 public class ResMailInfoDTO : ErrorCodeDTO
 {
-    public MailModel Mail { get; set; }
+    public MailModel? Mail { get; set; }
 }
 
 
@@ -35,7 +35,7 @@ public class ReqMailOpenDTO : InGameDTO
 public class ResMailOpenDTO : ErrorCodeDTO
 {
     public Int32 Page { get; set; }
-    public List<MailModel> MailList { get; set; }
+    public List<MailModel>? MailList { get; set; }
 }
 
 
@@ -44,8 +44,8 @@ public class ResMailOpenDTO : ErrorCodeDTO
 public class ReqMailSendDTO : InGameDTO
 {
     public Int64 ReceiverID { get; set; }
-    public String Title { get; set; }
-    public String Content { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string Content { get; set; } = string.Empty;
     public Int64 ItemID { get; set; }
 }
 

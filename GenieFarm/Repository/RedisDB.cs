@@ -1,17 +1,18 @@
 using CloudStructures;
 using CloudStructures.Structures;
 using System.Text;
+using ZLogger;
 
 public class RedisDb : IRedisDb
 {
     readonly ILogger<RedisDb> _logger;
-    RedisConnection _redisConn { get; set; }
+    RedisConnection _redisConn { get; set; } = null!;
 
     public RedisDb(ILogger<RedisDb> logger, IConfiguration configuration)
     {
         _logger = logger;
         var redisAddress = configuration.GetSection("DBConnection")["RedisDb"];
-        var redisConfig = new RedisConfig("GenieFarm", redisAddress);
+        var redisConfig = new RedisConfig("GenieFarm", redisAddress!);
         _redisConn = new RedisConnection(redisConfig);
     }
 
@@ -27,9 +28,9 @@ public class RedisDb : IRedisDb
         return await query.SetAsync(value, expiry);
     }
 
-    public async Task<String> GetAsync(String key)
+    public async Task<string?> GetAsync(string key)
     {
-        var query = new RedisString<String>(_redisConn, key, null);
+        var query = new RedisString<string>(_redisConn, key, null);
         var result = await query.GetAsync();
         return result.GetValueOrDefault();
     }

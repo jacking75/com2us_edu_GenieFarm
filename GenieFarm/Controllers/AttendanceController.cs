@@ -18,8 +18,10 @@ public class AttendanceController : ControllerBase
         // 마지막 출석 날짜 로드
         var lastAttendData = await _gameDb.GetAttendanceData(request.UserID);
 
+        _logger.LogInformation("lastAttendData : {0}", lastAttendData.LastAttendance);
+
         // 출석 가능한지 체크
-        if (lastAttendData.LastAttendance == null || IsAnotherDay(lastAttendData.LastAttendance))
+        if (IsAnotherDay(lastAttendData.LastAttendance))
         {
             if (!await _gameDb.Attend(request.UserID))
             {

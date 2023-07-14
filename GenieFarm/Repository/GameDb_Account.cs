@@ -23,13 +23,13 @@ public partial class GameDb : IGameDb
         _queryFactory = new SqlKata.Execution.QueryFactory(_dbConn, compiler);
     }
 
-    public async Task<AccountModel> GetDefaultDataByAuthId(String authId)
+    public async Task<AccountModel?> GetDefaultDataByAuthId(String authId)
     {
         // AuthId가 일치하는 행의 User Basic Information을 가져온다.
         var query = _queryFactory.Query("user_basicinfo").Where("AuthId", authId);
-        var result = await query.GetAsync<AccountModel>();
+        var result = (await query.GetAsync<AccountModel>()).FirstOrDefault();
 
-        return result.FirstOrDefault();
+        return result;
     }
 
     public async Task<ErrorCode> CreateDefaultData(String authId, String nickname)
@@ -66,7 +66,7 @@ public partial class GameDb : IGameDb
     {
         try
         {
-            var result = _queryFactory.Query("user_basicinfo").Where("AuthId", authId).Update(new { Nickname = nickname });
+            var result = await _queryFactory.Query("user_basicinfo").Where("AuthId", authId).UpdateAsync(new { Nickname = nickname });
             return result > 0;
         }
         catch
@@ -77,21 +77,21 @@ public partial class GameDb : IGameDb
 
     public async Task<Boolean> CheckNicknameExists(String nickname)
     {
-        var result = _queryFactory.Query("user_basicinfo").Select("UserId").Where("Nickname", nickname).Get<Int64>();
+        var result = await _queryFactory.Query("user_basicinfo").Select("UserId").Where("Nickname", nickname).GetAsync<Int64>();
 
         return result.Count() > 0;
     }
 
     public async Task<Boolean> CheckAuthIdExists(String authId)
     {
-        var result = _queryFactory.Query("user_basicinfo").Select("UserId").Where("AuthId", authId).Get<Int64>();
+        var result = await _queryFactory.Query("user_basicinfo").Select("UserId").Where("AuthId", authId).GetAsync<Int64>();
 
         return result.Count() > 0;
     }
 
     public async Task<Int32> UpdateLastLoginAt(Int64 userId)
     {
-        var result = _queryFactory.Query("user_basicinfo").Where("UserId", userId).Update(new { LastLoginAt = DateTime.Now });
+        var result = await _queryFactory.Query("user_basicinfo").Where("UserId", userId).UpdateAsync(new { LastLoginAt = DateTime.Now });
 
         return result;
     }

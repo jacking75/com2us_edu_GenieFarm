@@ -1,11 +1,12 @@
 using System.Text.Json;
+using ZLogger;
 
 public class AuthCheckMiddleware
 {
-    private readonly RequestDelegate _next;
-    private readonly ILogger<AuthCheckMiddleware> _logger;
-    private readonly IRedisDb _redisDb;
-    private HashSet<String> _exceptPath = new HashSet<String>()
+    readonly RequestDelegate _next;
+    readonly ILogger<AuthCheckMiddleware> _logger;
+    readonly IRedisDb _redisDb;
+    HashSet<String> _exceptPath = new HashSet<String>()
     {
         "/api/account/login", "/api/account/logout", "/api/account/register", "/api/account/nickname"
     };
@@ -15,15 +16,13 @@ public class AuthCheckMiddleware
         _next = next;
         _logger = logger;
         _redisDb = redisDb;
-        _logger.LogInformation("[AuthCheckMiddleware] Instance Created");
     }
+
     public async Task Invoke(HttpContext context)
     {
         var path = context.Request.Path;
-        _logger.LogInformation("[AuthCheckMiddleware.Invoke] Current Request Path is {}", path);
 
-
-        // 해당 요청이 그냥 넘겨야 하는 Path인지 체크한다.
+        // 해당 요청이 그냥 넘겨야 하는 Path인지 체크
         if (IsExceptPath(path))
         {
             await _next(context);
@@ -31,17 +30,17 @@ public class AuthCheckMiddleware
         }
         else
         {
-            // Body를 여러 번 읽기 위해 Buffering 설정
-            context.Request.EnableBuffering();
-            var bodyStream = new StreamReader(context.Request.Body);
-            var rawBody = await bodyStream.ReadToEndAsync();
-            _logger.LogInformation("[AuthCheckMiddleware.Invoke] Raw Body : {}", rawBody);
-            context.Request.Body.Position = 0;
-
+            // Request Body 로드
+            if (!GetRawBody(context, out var rawBody))
+            {
+                context.Response.StatusCode = 400;
+                return;
+            }
 
             // JSON 포맷 유효성 검사 : AuthID값과 authToken값을 가져옴
-            if (!IsValidFormattedJSON(rawBody, out String? authID, out String? authToken, out Int64 userId))
+            if (!IsValidFormattedJSON(rawBody, out string authID, out string authToken, out Int64 userId))
             {
+                _logger.ZLogInformationWithPayload(new { RequestId = context.Items["RequestId"], IsRequest = false, StatusCode = 400 }, "IsValidFormattedJSON");
                 context.Response.StatusCode = 400;
                 return;
             }
@@ -49,6 +48,7 @@ public class AuthCheckMiddleware
             // 토큰 유효성 검사
             if (!await IsValidToken(authID, authToken, userId))
             {
+                _logger.ZLogInformationWithPayload(new { RequestId = context.Items["RequestId"], IsRequest = false, StatusCode = 401 }, "IsValidToken");
                 context.Response.StatusCode = 401;
                 return;
             }
@@ -56,7 +56,7 @@ public class AuthCheckMiddleware
             // 중복 요청 검사
             if (await IsOverlappedRequest(authToken, path))
             {
-                _logger.LogInformation("[AuthCheckMiddleware.Invoke] Overlapped Request");
+                _logger.ZLogInformationWithPayload(new { RequestId = context.Items["RequestId"], IsRequest = false, StatusCode = 429 }, "IsOverlappedRequest");
                 context.Response.StatusCode = 429;
                 return;
             }
@@ -68,7 +68,7 @@ public class AuthCheckMiddleware
         }
     }
 
-    private async Task<bool> IsOverlappedRequest(String? authToken, String? path)
+    async Task<bool> IsOverlappedRequest(string authToken, string path)
     {
         if (!await _redisDb.AcquireRequest(authToken, path))
         {
@@ -78,10 +78,9 @@ public class AuthCheckMiddleware
         return false;
     }
 
-    private async Task<bool> IsValidToken(String? authID, String? authToken, Int64 userId)
+    async Task<bool> IsValidToken(string authID, string authToken, Int64 userId)
     {
-        _logger.LogInformation("[AuthCheckMiddleware.IsValidToken] AuthID : {}, AuthToken : {}", authID, authToken);
-        if (authID == null || authToken == null)
+        if (authID == string.Empty || authToken == string.Empty || userId == 0)
         {
             return false;
         }
@@ -98,8 +97,6 @@ public class AuthCheckMiddleware
             return false;
         }
 
-        _logger.LogInformation("[AuthCheckMiddleware.IsValidToken] Token From Memory : {}", memoryToken);
-
         if (!authToken.Equals(memoryToken))
         {
             return false;
@@ -108,34 +105,56 @@ public class AuthCheckMiddleware
         return true;
     }
 
-    private bool IsValidFormattedJSON(String rawBody, out String? authID, out String? authToken, out Int64 userId)
+    bool GetRawBody(HttpContext context, out string rawBody)
     {
-        try
-        {
-            JsonDocument doc = JsonDocument.Parse(rawBody);
-            authID = doc.RootElement.GetProperty("AuthID").GetString();
-            authToken = doc.RootElement.GetProperty("AuthToken").GetString();
-            userId = doc.RootElement.GetProperty("UserID").GetInt64();
+        rawBody = string.Empty;
 
-            if (authID == null || authToken == null || userId == 0)
+        if (context.Items["RawBody"] != null && context.Items["RawBody"] is string)
+        {
+            var rawString = context.Items["RawBody"] as string;
+
+            if (rawString == null)
             {
                 return false;
             }
+
+            rawBody = rawString;
+            return true;
+        }
+
+        return false;
+    }
+
+    bool IsValidFormattedJSON(string rawBody, out string authID, out string authToken, out Int64 userId)
+    {
+        authID = string.Empty;
+        authToken = string.Empty;
+        userId = 0;
+
+        try
+        {
+            JsonDocument doc = JsonDocument.Parse(rawBody);
+            var authIDString = doc.RootElement.GetProperty("AuthID").GetString();
+            var authTokenString = doc.RootElement.GetProperty("AuthToken").GetString();
+            userId = doc.RootElement.GetProperty("UserID").GetInt64();
+
+            if (authIDString == null || authTokenString == null || userId == 0)
+            {
+                return false;
+            }
+
+            authID = authIDString;
+            authToken = authTokenString;
 
             return true;
         }
         catch
         {
-            _logger.LogInformation("[AuthCheckMiddleware.InValidFormat] Request Body is Not Valid JSON");
-            authID = null;
-            authToken = null;
-            userId = 0;
-
             return false;
         }
     }
 
-    private bool IsExceptPath(PathString path)
+    bool IsExceptPath(PathString path)
     {
         if (_exceptPath.Contains(path))
         {
