@@ -28,14 +28,6 @@ public class ReqRegisterDTO : AuthDTO
     [MinLength(1, ErrorMessage = "Nickname must be at least 1 characters long.")]
     [MaxLength(10, ErrorMessage = "Nickname must be at most 10 characters long.")]
     public string Nickname { get; set; } = string.Empty;
-
-    [Required]
-    [MinLength(1, ErrorMessage = "AppVersion must be at least 1 characters long.")]
-    public string AppVersion { get; set; } = string.Empty;
-
-    [Required]
-    [MinLength(1, ErrorMessage = "MasterDataVersion must be at least 1 characters long.")]
-    public string MasterDataVersion { get; set; } = string.Empty;
 }
 
 public class ResRegisterDTO : ErrorCodeDTO
