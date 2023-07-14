@@ -6,7 +6,7 @@ public class AuthCheckMiddleware
     readonly RequestDelegate _next;
     readonly ILogger<AuthCheckMiddleware> _logger;
     readonly IRedisDb _redisDb;
-    HashSet<String> _exceptPath = new HashSet<String>()
+    HashSet<string> _exceptPath = new HashSet<string>()
     {
         "/api/account/login", "/api/account/logout", "/api/account/register", "/api/account/nickname"
     };

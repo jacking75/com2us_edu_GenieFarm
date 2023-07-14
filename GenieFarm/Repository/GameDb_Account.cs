@@ -23,7 +23,7 @@ public partial class GameDb : IGameDb
         _queryFactory = new SqlKata.Execution.QueryFactory(_dbConn, compiler);
     }
 
-    public async Task<AccountModel?> GetDefaultDataByAuthId(String authId)
+    public async Task<AccountModel?> GetDefaultDataByAuthId(string authId)
     {
         // AuthId가 일치하는 행의 User Basic Information을 가져온다.
         var query = _queryFactory.Query("user_basicinfo").Where("AuthId", authId);
@@ -32,7 +32,7 @@ public partial class GameDb : IGameDb
         return result;
     }
 
-    public async Task<ErrorCode> CreateDefaultData(String authId, String nickname)
+    public async Task<ErrorCode> CreateDefaultData(string authId, string nickname)
     {
         var userId = (Int64)0;
 
@@ -62,7 +62,7 @@ public partial class GameDb : IGameDb
         return ErrorCode.None;
     }
 
-    public async Task<Boolean> TryChangeNickname(String authId, String nickname)
+    public async Task<bool> TryChangeNickname(string authId, string nickname)
     {
         try
         {
@@ -75,14 +75,14 @@ public partial class GameDb : IGameDb
         }
     }
 
-    public async Task<Boolean> CheckNicknameExists(String nickname)
+    public async Task<bool> CheckNicknameExists(string nickname)
     {
         var result = await _queryFactory.Query("user_basicinfo").Select("UserId").Where("Nickname", nickname).GetAsync<Int64>();
 
         return result.Count() > 0;
     }
 
-    public async Task<Boolean> CheckAuthIdExists(String authId)
+    public async Task<bool> CheckAuthIdExists(string authId)
     {
         var result = await _queryFactory.Query("user_basicinfo").Select("UserId").Where("AuthId", authId).GetAsync<Int64>();
 

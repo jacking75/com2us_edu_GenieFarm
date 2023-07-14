@@ -16,9 +16,9 @@ public class RedisDb : IRedisDb
         _redisConn = new RedisConnection(redisConfig);
     }
 
-    public async Task<Boolean> SetAsync(String key, String value, TimeSpan? expiry = null)
+    public async Task<bool> SetAsync(string key, string value, TimeSpan? expiry = null)
     {
-        var query = new RedisString<String>(_redisConn, key, expiry);
+        var query = new RedisString<string>(_redisConn, key, expiry);
         return await query.SetAsync(value, expiry);
     }
 
@@ -35,23 +35,23 @@ public class RedisDb : IRedisDb
         return result.GetValueOrDefault();
     }
 
-    public async Task<Boolean> DeleteAsync(String key)
+    public async Task<bool> DeleteAsync(string key)
     {
-        var query = new RedisString<String>(_redisConn, key, null);
+        var query = new RedisString<string>(_redisConn, key, null);
         return await query.DeleteAsync();
     }
 
-    public async Task<Boolean> AcquireRequest(String authToken, String path)
+    public async Task<bool> AcquireRequest(string authToken, string path)
     {
         StringBuilder sb = new StringBuilder(authToken).Append(path);
-        var query = new RedisString<String>(_redisConn, sb.ToString(), TimeSpan.FromSeconds(5));
+        var query = new RedisString<string>(_redisConn, sb.ToString(), TimeSpan.FromSeconds(5));
         return await query.SetAsync("", null, StackExchange.Redis.When.NotExists);
     }
 
-    public async Task<Boolean> ReleaseRequest(String authToken, String path)
+    public async Task<bool> ReleaseRequest(string authToken, string path)
     {
         StringBuilder sb = new StringBuilder(authToken).Append(path);
-        var query = new RedisString<String>(_redisConn, sb.ToString(), null);
+        var query = new RedisString<string>(_redisConn, sb.ToString(), null);
         return await query.DeleteAsync();
     }
 }

@@ -6,7 +6,7 @@ using ZLogger;
 
 public partial class GameDb : IGameDb
 {
-    public async Task<Boolean> Attend(Int64 userId)
+    public async Task<bool> Attend(Int64 userId)
     {
         var result = await _queryFactory.StatementAsync("update user_attendance set LastAttendance = now(), AttendanceCount = AttendanceCount + 1 where UserId = @UserId", new { UserId = userId });
 

@@ -8,7 +8,7 @@ public class LogModel
 
     public string ClientIP { get; set; } = string.Empty;
 
-    public Boolean IsRequest { get; set; }
+    public bool IsRequest { get; set; }
 
     public ErrorCode ErrorCode { get; set; }
 

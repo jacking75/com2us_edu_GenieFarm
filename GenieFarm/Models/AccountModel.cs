@@ -2,9 +2,9 @@ public class AccountModel
 {
     public Int64 UserId { get; set; }
 
-    public String? AuthId { get; set; }
+    public string AuthId { get; set; } = string.Empty;
 
-    public String? Nickname { get; set; }
+    public string Nickname { get; set; } = string.Empty;
 
     public Int16 FarmLevel { get; set; }
 
@@ -12,7 +12,7 @@ public class AccountModel
 
     public DateTime LastLoginAt { get; set; }
 
-    public Boolean PurchasedPass { get; set; }
+    public bool PurchasedPass { get; set; }
 
     public Int16 MaxStorage { get; set; }
 

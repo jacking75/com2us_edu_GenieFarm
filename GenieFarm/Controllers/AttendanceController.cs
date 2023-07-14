@@ -18,7 +18,11 @@ public class AttendanceController : ControllerBase
         // 마지막 출석 날짜 로드
         var lastAttendData = await _gameDb.GetAttendanceData(request.UserID);
 
-        _logger.LogInformation("lastAttendData : {0}", lastAttendData.LastAttendance);
+        // 출석 정보가 존재하지 않음
+        if (lastAttendData == null)
+        {
+            return new ResAttendDTO() { Result = ErrorCode.AttendDataNotExists };
+        };
 
         // 출석 가능한지 체크
         if (IsAnotherDay(lastAttendData.LastAttendance))
@@ -40,7 +44,7 @@ public class AttendanceController : ControllerBase
     }
 
 
-    Boolean IsAnotherDay(DateTime lastAttendDate)
+    bool IsAnotherDay(DateTime lastAttendDate)
     {
         // 현재 날짜와 마지막 출석 날짜가 1일 이상 차이가 나면 True
         var currentDate = DateTime.Parse(DateTime.Now.ToShortDateString());

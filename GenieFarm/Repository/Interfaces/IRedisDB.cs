@@ -1,9 +1,9 @@
 public interface IRedisDb
 {
-    public Task<Boolean> SetAsync(String key, String value, TimeSpan? expiry = null);
-    public Task<Boolean> SetAsync(String key, Int64 value, TimeSpan? expiry = null);
-    public Task<string?> GetAsync(String key);
-    public Task<Boolean> DeleteAsync(String key);
-    public Task<Boolean> AcquireRequest(String authToken, String path);
-    public Task<Boolean> ReleaseRequest(String authToken, String path);
+    public Task<bool> SetAsync(string key, string value, TimeSpan? expiry = null);
+    public Task<bool> SetAsync(string key, Int64 value, TimeSpan? expiry = null);
+    public Task<string?> GetAsync(string key);
+    public Task<bool> DeleteAsync(string key);
+    public Task<bool> AcquireRequest(string authToken, string path);
+    public Task<bool> ReleaseRequest(string authToken, string path);
 }

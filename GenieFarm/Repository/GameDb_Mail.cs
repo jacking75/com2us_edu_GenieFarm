@@ -30,7 +30,7 @@ public partial class GameDb : IGameDb
     }
 
 
-    public async Task<Boolean> DeleteMail(Int64 userId, Int64 mailId)
+    public async Task<bool> DeleteMail(Int64 userId, Int64 mailId)
     {
         var affectedRow = await _queryFactory.Query("mail_info").Where("MailId", mailId).Where("ReceiverId", userId).Where("IsDeleted", false).UpdateAsync(new { IsDeleted = true });
 

@@ -72,7 +72,7 @@ public class DTOLoggingMiddleware
     }
 
 
-    Boolean CreateRequestID(HttpContext context, out Int64 createdId)
+    bool CreateRequestID(HttpContext context, out Int64 createdId)
     {
         try
         {
