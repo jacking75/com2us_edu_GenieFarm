@@ -102,7 +102,7 @@ public partial class GameDb : IGameDb
 
             // 아이템 Insert
             var affectedRow = await _queryFactory.Query("farm_item").InsertAsync(columns, data);
-            if (affectedRow != 4)
+            if (affectedRow != _masterDb._defaultFarmItemList!.Count)
             {
                 throw new Exception();
             }
