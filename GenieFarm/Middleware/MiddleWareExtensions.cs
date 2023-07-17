@@ -4,9 +4,4 @@ public static class MiddlewareExtensions
     {
         return builder.UseMiddleware<AuthCheckMiddleware>();
     }
-
-    public static IApplicationBuilder UseDTOLoggingMiddleware(this IApplicationBuilder builder)
-    {
-        return builder.UseMiddleware<DTOLoggingMiddleware>();
-    }
 }

@@ -6,5 +6,5 @@
 
     public Int64 ItemCode { get; set; }
 
-    public DateTime ObtainedAt { get; set; }
+    public Int16 ItemCount { get; set; }
 }
