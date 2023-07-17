@@ -20,17 +20,25 @@ public class ResLoginDTO : ErrorCodeDTO
 }
 
 
-// Register : 회원가입
+// Create : 클라이언트 최초 접속 (게임 데이터 생성)
 
-public class ReqRegisterDTO : AuthDTO
+public class ReqCreateDTO : AuthDTO
 {
     [Required]
     [MinLength(1, ErrorMessage = "Nickname must be at least 1 characters long.")]
     [MaxLength(10, ErrorMessage = "Nickname must be at most 10 characters long.")]
     public string Nickname { get; set; } = string.Empty;
+
+    [Required]
+    [MinLength(1, ErrorMessage = "AppVersion must be at least 1 characters long.")]
+    public string AppVersion { get; set; } = string.Empty;
+
+    [Required]
+    [MinLength(1, ErrorMessage = "MasterDataVersion must be at least 1 characters long.")]
+    public string MasterDataVersion { get; set; } = string.Empty;
 }
 
-public class ResRegisterDTO : ErrorCodeDTO
+public class ResCreateDTO : ErrorCodeDTO
 {
 
 }

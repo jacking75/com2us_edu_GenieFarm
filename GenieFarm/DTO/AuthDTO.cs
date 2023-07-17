@@ -2,6 +2,7 @@
 
 public class AuthDTO
 {
-    public string AuthID { get; set; } = string.Empty;
+    public string PlayerID { get; set; } = string.Empty;
+
     public string AuthToken { get; set; } = string.Empty;
 }
