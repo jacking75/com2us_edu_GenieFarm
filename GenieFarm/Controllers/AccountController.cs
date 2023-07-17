@@ -141,12 +141,12 @@ public class AccountController : ControllerBase
 
     private bool VersionCheck(string appVersion, string masterDataVersion)
     {
-        if (appVersion != "0.1")
+        if (!(appVersion.Equals("0.1")))
         {
             return false;
         }
 
-        if (masterDataVersion != "0.1")
+        if (!(masterDataVersion.Equals("0.1")))
         {
             return false;
         }
