@@ -9,12 +9,14 @@ Content-Type: application/json
 }
 
 ###
-POST http://localhost:5218/api/account/register
+POST http://localhost:5218/api/account/create
 Content-Type: application/json
 
 {
-    "AuthID" : "test06",
-    "AuthToken" : "P2H95LNF6NT8UC",
+    "AuthID" : "test01",
+    "AuthToken" : "DUWPQCFN5DQF4P",
+    "AppVersion" : "0.1",
+    "MasterDataVersion" : "0.1",
     "Nickname" : "Genie"
 }
 
