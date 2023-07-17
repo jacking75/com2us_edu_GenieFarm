@@ -139,7 +139,7 @@ public class AccountController : ControllerBase
     //    return ErrorCode.None;
     //}
 
-    private bool VersionCheck(string appVersion, string masterDataVersion)
+    bool VersionCheck(string appVersion, string masterDataVersion)
     {
         if (!(appVersion.Equals("0.1")))
         {
