@@ -80,7 +80,7 @@ public partial class GameDb : IGameDb
                 }
             }
 
-            return ErrorCode.MailSendException;
+            return ErrorCode.MailSendFailed;
         }
 
         return ErrorCode.None;
@@ -111,7 +111,7 @@ public partial class GameDb : IGameDb
             // 아이템 소유권 롤백
             var itemRollbackQuery = await _queryFactory.Query("farm_item").Where("ItemId", itemId).Where("OwnerId", userId).UpdateAsync(new { OwnerId = 0 });
 
-            return ErrorCode.MailItemReceiveFail;
+            return ErrorCode.MailItemReceiveFailed;
         }
 
         return ErrorCode.None;
