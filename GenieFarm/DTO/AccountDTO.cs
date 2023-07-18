@@ -5,18 +5,20 @@ using System.ComponentModel.DataAnnotations;
 
 public class ReqLoginDTO : AuthDTO
 {
-    [Required]
-    [MinLength(1, ErrorMessage = "AppVersion must be at least 1 characters long.")]
-    public string AppVersion { get; set; } = string.Empty;
-
-    [Required]
-    [MinLength(1, ErrorMessage = "MasterDataVersion must be at least 1 characters long.")]
-    public string MasterDataVersion { get; set; } = string.Empty;
+    public string PlayerID { get; set; } = string.Empty;
 }
 
 public class ResLoginDTO : ErrorCodeDTO
 {
+    public DefaultDataDTO? DefaultData { get; set; }
+    public string? AuthToken { get; set; }
+}
+
+public class DefaultDataDTO
+{
     public AccountModel? UserData { get; set; }
+    public AttendanceModel? AttendData { get; set; }
+    public FarmInfoModel? FarmInfoData { get; set; }
 }
 
 
@@ -24,18 +26,12 @@ public class ResLoginDTO : ErrorCodeDTO
 
 public class ReqCreateDTO : AuthDTO
 {
+    public string PlayerID { get; set; } = string.Empty;
+
     [Required]
     [MinLength(1, ErrorMessage = "Nickname must be at least 1 characters long.")]
     [MaxLength(10, ErrorMessage = "Nickname must be at most 10 characters long.")]
     public string Nickname { get; set; } = string.Empty;
-
-    [Required]
-    [MinLength(1, ErrorMessage = "AppVersion must be at least 1 characters long.")]
-    public string AppVersion { get; set; } = string.Empty;
-
-    [Required]
-    [MinLength(1, ErrorMessage = "MasterDataVersion must be at least 1 characters long.")]
-    public string MasterDataVersion { get; set; } = string.Empty;
 }
 
 public class ResCreateDTO : ErrorCodeDTO

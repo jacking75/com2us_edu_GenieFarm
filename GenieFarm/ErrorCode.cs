@@ -7,13 +7,16 @@ public enum ErrorCode : UInt16
 
     AuthCheckFail = 10,
     InvalidVersion = 11,
-    SessionSettingFailed = 12,
+    TokenSettingFailed = 12,
     CreateDefaultAttendanceFailed = 13,
     CreateDefaultFarmInfoFailed = 14,
     InsertDefaultItemFailed = 15,
     UserNotExists = 16,
     UserAlreadyExists = 17,
+    UserInfoNotExists = 32,
+    FarmInfoNotExists = 33,
     DuplicateNickname = 18,
+    LastLoginUpdateFailed = 34,
     LogoutFailed = 19,
 
     AlreadyAttended = 20,

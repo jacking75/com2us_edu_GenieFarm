@@ -23,9 +23,9 @@ public class RedisDb : IRedisDb
         return await query.SetAsync(value, expiry);
     }
 
-    public async Task<bool> SetAsync(string key, Int64 value, TimeSpan? expiry)
+    public async Task<bool> SetAsync(Int64 key, string value, TimeSpan? expiry)
     {
-        var query = new RedisString<Int64>(_redisConn, key, expiry);
+        var query = new RedisString<string>(_redisConn, key.ToString(), expiry);
         return await query.SetAsync(value, expiry);
     }
 

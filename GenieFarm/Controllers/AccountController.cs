@@ -1,4 +1,6 @@
 using System.Net;
+using System.Security.Cryptography;
+using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using Org.BouncyCastle.Asn1.Ocsp;
 using ZLogger;
@@ -33,8 +35,8 @@ public class AccountController : ControllerBase
             return new ResCreateDTO() { Result = ErrorCode.AuthCheckFail };
         }
 
-        // GameDB에 해당 PlayerID로 된 데이터가 존재하는지 확인
-        if (await _gameDb.CheckPlayerIdExists(request.PlayerID))
+        // GameDB에 해당 PlayerID로 된 계정 데이터가 존재하는지 확인
+        if (0 != await _gameDb.GetUserIdByPlayerId(request.PlayerID))
         {
             return new ResCreateDTO() { Result = ErrorCode.UserAlreadyExists };
         }
@@ -46,34 +48,48 @@ public class AccountController : ControllerBase
         return new ResCreateDTO() { Result = errorCode };
     }
 
-    //[HttpPost("login")]
-    //public async Task<ResLoginDTO> Login(ReqLoginDTO request)
-    //{
-    //    // 하이브 서버에 인증 요청
-    //    if (!await AuthCheck(request.PlayerID, request.AuthToken))
-    //    {
-    //        return new ResLoginDTO() { Result = ErrorCode.AuthCheckFail };
-    //    }
+    [HttpPost("login")]
+    public async Task<ResLoginDTO> Login(ReqLoginDTO request)
+    {
+        // 하이브 서버에 인증 요청
+        if (!await AuthCheck(request.PlayerID, request.AuthToken))
+        {
+            return new ResLoginDTO() { Result = ErrorCode.AuthCheckFail };
+        }
 
-    //    // GameDB에 기본 게임 데이터가 있는지 체크
-    //    var accountData = await _gameDb.GetDefaultDataByPlayerId(request.PlayerID);
-    //    if (accountData == null)
-    //    {
-    //        return new ResLoginDTO() { Result = ErrorCode.UserNotExists };
-    //    }
+        // GameDB에 해당 PlayerID로 된 계정 데이터가 존재하는지 확인
+        var userId = await _gameDb.GetUserIdByPlayerId(request.PlayerID);
+        if (0 == await _gameDb.GetUserIdByPlayerId(request.PlayerID))
+        {
+            return new ResLoginDTO() { Result = ErrorCode.UserNotExists };
+        }
 
-    //    // Redis 토큰 세팅
-    //    if (ErrorCode.None != await SetTokenOnRedis(request.PlayerID, request.AuthToken, accountData.UserId))
-    //    {
-    //        return new ResLoginDTO() { Result = ErrorCode.SessionSettingFail };
-    //    }
+        // 토큰 생성 및 Redis에 세팅
+        var token = Security.CreateAuthToken();
+        if (ErrorCode.None != await SetTokenOnRedis(userId, token))
+        {
+            return new ResLoginDTO() { Result = ErrorCode.TokenSettingFailed };
+        }
 
-    //    // 최종 로그인 시각 변경
-    //    await _gameDb.UpdateLastLoginAt(accountData.UserId);
+        // 게임 데이터 로드
+        var defaultDataResult = await _gameDb.GetDefaultDataByUserId(userId);
+        if (defaultDataResult.Item1 != ErrorCode.None)
+        {
+            return new ResLoginDTO() { Result = defaultDataResult.Item1 };
+        }
 
-    //    // 유저 데이터 반환
-    //    return new ResLoginDTO() { Result = ErrorCode.None, UserData = accountData };
-    //}
+        // 최종 로그인 시각 갱신
+        if (!await _gameDb.UpdateLastLoginAt(userId))
+        {
+            return new ResLoginDTO() { Result = ErrorCode.LastLoginUpdateFailed };
+        }
+
+        _logger.ZLogInformationWithPayload(new { Type = "Login",
+            PlayerID = request.PlayerID, UserID = userId,
+            AuthToken = request.AuthToken }, "Statistic");
+
+        return new ResLoginDTO() { Result = ErrorCode.None, DefaultData = defaultDataResult.Item2, AuthToken = token };
+    }
 
     //[HttpPost("logout")]
     //public async Task<ResLogoutDTO> Logout(ReqLogoutDTO request)
@@ -143,19 +159,30 @@ public class AccountController : ControllerBase
         }
     }
 
+    async Task<ErrorCode> SetTokenOnRedis(Int64 userId, string sessionToken)
+    {
+        // 같은 키의 토큰이 있어도 무조건 Overwrite하여 기존 토큰을 무효화
+        if (!await _redisDb.SetAsync(userId, sessionToken, TimeSpan.FromDays(7)))
+        {
+            return ErrorCode.TokenSettingFailed;
+        }
 
-    //async Task<ErrorCode> SetTokenOnRedis(string authId, string authToken, Int64 userId)
-    //{
-    //    // 같은 키의 토큰이 있어도 무조건 Overwrite하여 기존 토큰을 무효화
-    //    if (!await _redisDb.SetAsync(authId, authToken, TimeSpan.FromDays(7)))
-    //    {
-    //        return ErrorCode.SessionSettingFail;
-    //    }
-    //    if (!await _redisDb.SetAsync(authToken, userId, TimeSpan.FromDays(7)))
-    //    {
-    //        return ErrorCode.SessionSettingFail;
-    //    }
+        return ErrorCode.None;
+    }
 
-    //    return ErrorCode.None;
-    //}
+    public class Security
+    {
+        private const String AllowableCharacters = "abcdefghijklmnopqrstuvwxyz0123456789";
+
+        public static String CreateAuthToken()
+        {
+            var bytes = new Byte[25];
+            using (var random = RandomNumberGenerator.Create())
+            {
+                random.GetBytes(bytes);
+            }
+
+            return new String(bytes.Select(x => AllowableCharacters[x % AllowableCharacters.Length]).ToArray());
+        }
+    }
 }

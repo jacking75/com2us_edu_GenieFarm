@@ -5,4 +5,6 @@ public class AttendanceModel
     public Int16 AttendanceCount { get; set; }
 
     public DateTime LastAttendance { get; set; }
+    public bool PurchasedPass { get; set; }
+    public DateTime PassEndDate { get; set; }
 }

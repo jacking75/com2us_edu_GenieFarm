@@ -1,12 +1,10 @@
 public interface IGameDb
 {
     // GameDb_User.cs
-    //public Task<AccountModel?> GetDefaultDataByPlayerId(string playerId);
+    public Task<Tuple<ErrorCode, DefaultDataDTO?>> GetDefaultDataByUserId(Int64 userId);
     public Task<ErrorCode> CreateDefaultData(string playerId, string nickname);
-    //public Task<bool> TryChangeNickname(string playerId, string nickname);
-    //public Task<bool> CheckNicknameExists(string nickname);
-    public Task<bool> CheckPlayerIdExists(string playerId);
-    //public Task<Int32> UpdateLastLoginAt(Int64 userId);
+    public Task<Int64> GetUserIdByPlayerId(string playerId);
+    public Task<bool> UpdateLastLoginAt(Int64 userId);
 
     // GameDb_Attendance.cs
     public Task<AttendanceModel?> GetAttendanceData(Int64 userId);
