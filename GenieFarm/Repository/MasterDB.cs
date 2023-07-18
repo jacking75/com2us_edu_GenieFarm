@@ -44,7 +44,7 @@ public class MasterDb : IMasterDb {
         }
         catch
         {
-            _logger.ZLogInformationWithPayload(new { ErrorCode = ErrorCode.MasterDataLoadFailed }, "MasterDB Initializing Fail");
+            _logger.ZLogInformationWithPayload(new { ErrorCode = ErrorCode.MasterDB_Fail_LoadData }, "MasterDB Initializing Fail");
             return false;
         }
 

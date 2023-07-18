@@ -35,7 +35,7 @@ public partial class GameDb : IGameDb
         var defaultUserDataResult = await CreateDefaultUserData(playerId, nickname, rollbackQuerys);
         if (defaultUserDataResult.Item1 != ErrorCode.None)
         {
-            return ErrorCode.DuplicateNickname;
+            return ErrorCode.Account_Fail_DuplicateNickname;
         }
         userId = defaultUserDataResult.Item2;
 
@@ -71,21 +71,21 @@ public partial class GameDb : IGameDb
         result.UserData = await GetUserData(userId);
         if (result.UserData == null)
         {
-            return new Tuple<ErrorCode, DefaultDataDTO?>(ErrorCode.UserInfoNotExists, null);
+            return new Tuple<ErrorCode, DefaultDataDTO?>(ErrorCode.Account_Fail_UserInfoNotExists, null);
         }
 
         // 출석부 정보 로드
         result.AttendData = await GetAttendData(userId);
         if (result.AttendData == null)
         {
-            return new Tuple<ErrorCode, DefaultDataDTO?>(ErrorCode.AttendDataNotExists, null);
+            return new Tuple<ErrorCode, DefaultDataDTO?>(ErrorCode.Account_Fail_AttendDataNotExists, null);
         }
 
         // 농장 기본 정보 로드
         result.FarmInfoData = await GetFarmInfoData(userId);
         if (result.FarmInfoData == null)
         {
-            return new Tuple<ErrorCode, DefaultDataDTO?>(ErrorCode.FarmInfoNotExists, null);
+            return new Tuple<ErrorCode, DefaultDataDTO?>(ErrorCode.Account_Fail_FarmInfoNotExists, null);
         }
 
         return new Tuple<ErrorCode, DefaultDataDTO?>(ErrorCode.None, result);
@@ -121,9 +121,9 @@ public partial class GameDb : IGameDb
         catch
         {
             _logger.ZLogDebugWithPayload(new { Type = "CreateDefaultUserData",
-                ErrorCode = ErrorCode.DuplicateNickname, PlayerID = playerId,
+                ErrorCode = ErrorCode.Account_Fail_DuplicateNickname, PlayerID = playerId,
                 Nickname = "nickname" }, "Failed");
-            return new Tuple<ErrorCode, Int64>(ErrorCode.DuplicateNickname, 0);
+            return new Tuple<ErrorCode, Int64>(ErrorCode.Account_Fail_DuplicateNickname, 0);
         }
     }
 
@@ -140,8 +140,8 @@ public partial class GameDb : IGameDb
         {
             await Rollback(rollbackQuerys);
 
-            _logger.ZLogDebugWithPayload(new { Type = "CreateDefaultAttendanceData", ErrorCode = ErrorCode.CreateDefaultAttendanceFailed, UserId = userId, Exception = ex.GetType().ToString() }, "Failed");
-            return ErrorCode.CreateDefaultAttendanceFailed;
+            _logger.ZLogDebugWithPayload(new { Type = "CreateDefaultAttendanceData", ErrorCode = ErrorCode.Account_Fail_CreateDefaultAttendanceData, UserId = userId, Exception = ex.GetType().ToString() }, "Failed");
+            return ErrorCode.Account_Fail_CreateDefaultAttendanceData;
         }
     }
 
@@ -160,8 +160,8 @@ public partial class GameDb : IGameDb
         {
             await Rollback(rollbackQuerys);
 
-            _logger.ZLogDebugWithPayload(new { Type = "CreateDefaultFarmData", ErrorCode = ErrorCode.CreateDefaultFarmInfoFailed, UserId = userId, Exception = ex.GetType().ToString() }, "Failed");
-            return ErrorCode.CreateDefaultFarmInfoFailed;
+            _logger.ZLogDebugWithPayload(new { Type = "CreateDefaultFarmData", ErrorCode = ErrorCode.Account_Fail_CreateDefaultFarmData, UserId = userId, Exception = ex.GetType().ToString() }, "Failed");
+            return ErrorCode.Account_Fail_CreateDefaultFarmData;
         }
     }
 
@@ -192,13 +192,13 @@ public partial class GameDb : IGameDb
 
             if (ex.InnerException is AffectedRowCountOutOfRangeException)
             {
-                _logger.ZLogDebugWithPayload(new { Type = "InsertDefaultItem", ErrorCode = ErrorCode.InsertDefaultItemFailed, UserId = userId, Exception = "AffectedRowCountOutOfRangeException" }, "Failed");
+                _logger.ZLogDebugWithPayload(new { Type = "InsertDefaultItem", ErrorCode = ErrorCode.Account_Fail_InsertDefaultItem, UserId = userId, Exception = "AffectedRowCountOutOfRangeException" }, "Failed");
             } else
             {
-                _logger.ZLogDebugWithPayload(new { Type = "InsertDefaultItem", ErrorCode = ErrorCode.InsertDefaultItemFailed, UserId = userId, Exception = ex.GetType().ToString() }, "Failed");
+                _logger.ZLogDebugWithPayload(new { Type = "InsertDefaultItem", ErrorCode = ErrorCode.Account_Fail_InsertDefaultItem, UserId = userId, Exception = ex.GetType().ToString() }, "Failed");
             }
 
-            return ErrorCode.InsertDefaultItemFailed;
+            return ErrorCode.Account_Fail_InsertDefaultItem;
         }
     }
 

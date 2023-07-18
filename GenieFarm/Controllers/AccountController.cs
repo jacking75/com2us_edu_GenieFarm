@@ -32,13 +32,13 @@ public class AccountController : ControllerBase
         // 하이브 서버에 인증 요청
         if (!await AuthCheck(request.PlayerID, request.AuthToken))
         {
-            return new ResCreateDTO() { Result = ErrorCode.AuthCheckFail };
+            return new ResCreateDTO() { Result = ErrorCode.Hive_Fail_AuthCheck };
         }
 
         // GameDB에 해당 PlayerID로 된 계정 데이터가 존재하는지 확인
         if (0 != await _gameDb.GetUserIdByPlayerId(request.PlayerID))
         {
-            return new ResCreateDTO() { Result = ErrorCode.UserAlreadyExists };
+            return new ResCreateDTO() { Result = ErrorCode.Account_Fail_UserAlreadyExists };
         }
 
         // GameDB에 기본 게임 데이터 생성
@@ -54,21 +54,21 @@ public class AccountController : ControllerBase
         // 하이브 서버에 인증 요청
         if (!await AuthCheck(request.PlayerID, request.AuthToken))
         {
-            return new ResLoginDTO() { Result = ErrorCode.AuthCheckFail };
+            return new ResLoginDTO() { Result = ErrorCode.Hive_Fail_AuthCheck };
         }
 
         // GameDB에 해당 PlayerID로 된 계정 데이터가 존재하는지 확인
         var userId = await _gameDb.GetUserIdByPlayerId(request.PlayerID);
         if (0 == await _gameDb.GetUserIdByPlayerId(request.PlayerID))
         {
-            return new ResLoginDTO() { Result = ErrorCode.UserNotExists };
+            return new ResLoginDTO() { Result = ErrorCode.Account_Fail_UserNotExists };
         }
 
         // 토큰 생성 및 Redis에 세팅
         var token = Security.CreateAuthToken();
         if (ErrorCode.None != await SetTokenOnRedis(userId, token))
         {
-            return new ResLoginDTO() { Result = ErrorCode.TokenSettingFailed };
+            return new ResLoginDTO() { Result = ErrorCode.Redis_Fail_SetToken };
         }
 
         // 게임 데이터 로드
@@ -82,8 +82,8 @@ public class AccountController : ControllerBase
         if (!await _gameDb.UpdateLastLoginAt(userId))
         {
             _logger.ZLogDebugWithPayload(new { Type = "UpdateLastLoginAt",
-                ErrorCode = ErrorCode.LastLoginUpdateFailed, PlayerID = request.PlayerID,
-                UserID = userId, AuthToken = request.AuthToken }, "Failed");
+                ErrorCode = ErrorCode.Account_Fail_UpdateLastLogin,
+                PlayerID = request.PlayerID, UserID = userId, AuthToken = request.AuthToken }, "Failed");
         }
 
         _logger.ZLogInformationWithPayload(new { Type = "Login",
@@ -140,7 +140,7 @@ public class AccountController : ControllerBase
             // 응답 체크
             if (hiveResponse == null || hiveResponse.StatusCode != HttpStatusCode.OK)
             {
-                _logger.ZLogDebugWithPayload(new { Type = "AuthCheck", ErrorCode = ErrorCode.AuthCheckFail, PlayerID = playerID, AuthToken = authToken, StatusCode = hiveResponse == null? 0 : hiveResponse.StatusCode }, "Failed");
+                _logger.ZLogDebugWithPayload(new { Type = "AuthCheck", ErrorCode = ErrorCode.Hive_Fail_AuthCheck, PlayerID = playerID, AuthToken = authToken, StatusCode = hiveResponse == null? 0 : hiveResponse.StatusCode }, "Failed");
                 return false;
             }
 
@@ -148,7 +148,7 @@ public class AccountController : ControllerBase
             var authResult = await hiveResponse.Content.ReadFromJsonAsync<ErrorCodeDTO>();
             if (authResult == null || authResult.Result != ErrorCode.None)
             {
-                _logger.ZLogDebugWithPayload(new { Type = "AuthCheck", ErrorCode = ErrorCode.AuthCheckFail, PlayerID = playerID, AuthToken = authToken}, "Failed");
+                _logger.ZLogDebugWithPayload(new { Type = "AuthCheck", ErrorCode = ErrorCode.Hive_Fail_AuthCheck, PlayerID = playerID, AuthToken = authToken}, "Failed");
                 return false;
             }
 
@@ -156,7 +156,7 @@ public class AccountController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.ZLogDebugWithPayload(new { Type = "AuthCheck", ErrorCode = ErrorCode.AuthCheckFail, PlayerID = playerID, AuthToken = authToken, Exception = ex.GetType().ToString() }, "Failed");
+            _logger.ZLogDebugWithPayload(new { Type = "AuthCheck", ErrorCode = ErrorCode.Hive_Fail_AuthCheck, PlayerID = playerID, AuthToken = authToken, Exception = ex.GetType().ToString() }, "Failed");
             return false;
         }
     }
@@ -166,7 +166,7 @@ public class AccountController : ControllerBase
         // 같은 키의 토큰이 있어도 무조건 Overwrite하여 기존 토큰을 무효화
         if (!await _redisDb.SetAsync(userId, sessionToken, TimeSpan.FromDays(7)))
         {
-            return ErrorCode.TokenSettingFailed;
+            return ErrorCode.Redis_Fail_SetToken;
         }
 
         return ErrorCode.None;
