@@ -3,6 +3,7 @@ using MySql.Data.MySqlClient;
 using SqlKata.Compilers;
 using ZLogger;
 using System.Collections;
+using Org.BouncyCastle.Asn1.Ocsp;
 
 public partial class GameDb : IGameDb
 {
@@ -29,15 +30,13 @@ public partial class GameDb : IGameDb
     public async Task<ErrorCode> CreateDefaultData(string playerId, string nickname)
     {
         var rollbackQuerys = new List<SqlKata.Query>();
-        var userId = (Int64)0;
 
         // 기본 유저 데이터 생성
-        var defaultUserDataResult = await CreateDefaultUserData(playerId, nickname, rollbackQuerys);
-        if (defaultUserDataResult.Item1 != ErrorCode.None)
+        (var defaultUserDataResult, var userId) = await CreateDefaultUserData(playerId, nickname, rollbackQuerys);
+        if (defaultUserDataResult != ErrorCode.None)
         {
-            return ErrorCode.Account_Fail_DuplicateNickname;
+            return defaultUserDataResult;
         }
-        userId = defaultUserDataResult.Item2;
 
         // 유저 출석 정보 생성
         var attendanceInsertResult = await CreateDefaultAttendanceData(userId, rollbackQuerys);
@@ -94,18 +93,28 @@ public partial class GameDb : IGameDb
     public async Task<Int64> GetUserIdByPlayerId(string playerId)
     {
         var result = (await _queryFactory.Query("user_basicinfo")
-            .Select("UserId").Where("PlayerId", playerId)
-            .GetAsync<Int64>()).FirstOrDefault();
+                                         .Select("UserId").Where("PlayerId", playerId)
+                                         .GetAsync<Int64>()).FirstOrDefault();
 
         return result;
     }
 
     public async Task<bool> UpdateLastLoginAt(Int64 userId)
     {
-        var result = await _queryFactory.Query("user_basicinfo")
-            .Where("UserId", userId).UpdateAsync(new { LastLoginAt = DateTime.Now });
+        var result = await _queryFactory.Query("user_basicinfo").Where("UserId", userId)
+                                        .UpdateAsync(new { LastLoginAt = DateTime.Now });
 
-        return result > 0;
+        if (result < 1)
+        {
+            var errorCode = ErrorCode.Account_Fail_UpdateLastLogin;
+
+            _logger.ZLogDebugWithPayload(EventIdGenerator.Create(errorCode),
+                                         new { UserID = userId }, "Failed");
+
+            return false;
+        }
+
+        return true;
     }
 
     async Task<Tuple<ErrorCode, Int64>> CreateDefaultUserData(string playerId, string nickname, List<SqlKata.Query> rollbackQuerys)
@@ -113,17 +122,20 @@ public partial class GameDb : IGameDb
         try
         {
             var userId = await _queryFactory.Query("user_basicinfo")
-                .InsertGetIdAsync<Int64>(new { PlayerId = playerId, Nickname = nickname });
+                                            .InsertGetIdAsync<Int64>(new { PlayerId = playerId, Nickname = nickname });
 
             rollbackQuerys.Add(_queryFactory.Query("user_basicinfo").Where("UserId", userId));
+
             return new Tuple<ErrorCode, Int64>(ErrorCode.None, userId);
         }
-        catch
+        catch (Exception ex)
         {
-            _logger.ZLogDebugWithPayload(new { Type = "CreateDefaultUserData",
-                ErrorCode = ErrorCode.Account_Fail_DuplicateNickname, PlayerID = playerId,
-                Nickname = "nickname" }, "Failed");
-            return new Tuple<ErrorCode, Int64>(ErrorCode.Account_Fail_DuplicateNickname, 0);
+            var errorCode = ErrorCode.Account_Fail_DuplicateNickname;
+
+            _logger.ZLogDebugWithPayload(EventIdGenerator.Create(errorCode), ex,
+                                         new { PlayerID = playerId, Nickname = "nickname" }, "Failed");
+
+            return new Tuple<ErrorCode, Int64>(errorCode, 0);
         }
     }
 
@@ -131,17 +143,23 @@ public partial class GameDb : IGameDb
     {
         try
         {
-            var attendanceInsert = await _queryFactory.Query("user_attendance").InsertAsync(new { UserId = userId, AttendanceCount = 0 });
+            var attendanceInsert = await _queryFactory.Query("user_attendance")
+                                                      .InsertAsync(new { UserId = userId, AttendanceCount = 0 });
 
             rollbackQuerys.Add(_queryFactory.Query("user_attendance").Where("UserId", userId));
+
             return ErrorCode.None;
         }
         catch (Exception ex)
         {
-            await Rollback(rollbackQuerys);
+            var errorCode = ErrorCode.Account_Fail_CreateDefaultAttendanceData;
 
-            _logger.ZLogDebugWithPayload(new { Type = "CreateDefaultAttendanceData", ErrorCode = ErrorCode.Account_Fail_CreateDefaultAttendanceData, UserId = userId, Exception = ex.GetType().ToString() }, "Failed");
-            return ErrorCode.Account_Fail_CreateDefaultAttendanceData;
+            await Rollback(errorCode, rollbackQuerys);
+
+            _logger.ZLogDebugWithPayload(EventIdGenerator.Create(errorCode), ex,
+                                         new { UserId = userId }, "Failed");
+
+            return errorCode;
         }
     }
 
@@ -151,17 +169,27 @@ public partial class GameDb : IGameDb
         {
             // 마스터 DB의 Default 데이터를 가져와 생성
             var defaultData = _masterDb._defaultFarmData!;
-            await _queryFactory.Query("farm_info").InsertAsync(new { UserId = userId, FarmLevel = defaultData.DefaultLevel, MaxStorage = defaultData.DefaultStorage, Love = defaultData.DefaultLove, Money = defaultData.DefaultMoney });
+            await _queryFactory.Query("farm_info")
+                               .InsertAsync(new { UserId = userId,
+                                                  FarmLevel = defaultData.DefaultLevel,
+                                                  MaxStorage = defaultData.DefaultStorage,
+                                                  Love = defaultData.DefaultLove,
+                                                  Money = defaultData.DefaultMoney });
 
             rollbackQuerys.Add(_queryFactory.Query("farm_info").Where("UserId", userId));
+
             return ErrorCode.None;
         }
         catch (Exception ex)
         {
-            await Rollback(rollbackQuerys);
+            var errorCode = ErrorCode.Account_Fail_CreateDefaultFarmData;
 
-            _logger.ZLogDebugWithPayload(new { Type = "CreateDefaultFarmData", ErrorCode = ErrorCode.Account_Fail_CreateDefaultFarmData, UserId = userId, Exception = ex.GetType().ToString() }, "Failed");
-            return ErrorCode.Account_Fail_CreateDefaultFarmData;
+            await Rollback(errorCode, rollbackQuerys);
+
+            _logger.ZLogDebugWithPayload(EventIdGenerator.Create(errorCode), ex,
+                                         new { UserId = userId }, "Failed");
+
+            return errorCode;
         }
     }
 
@@ -175,7 +203,11 @@ public partial class GameDb : IGameDb
             var affectedRow = 0;
             foreach (var item in _masterDb._defaultFarmItemList!)
             {
-                affectedRow += await _queryFactory.Query("farm_item").InsertAsync(new { OwnerId = userId, ItemCode = item.Code, ItemCount = item.Count });
+                affectedRow += await _queryFactory.Query("farm_item")
+                                                  .InsertAsync(new {
+                                                      OwnerId = userId,
+                                                      ItemCode = item.Code,
+                                                      ItemCount = item.Count });
             }
 
             // Item 개수만큼 Insert되지 않았다면 롤백
@@ -188,49 +220,49 @@ public partial class GameDb : IGameDb
         }
         catch (Exception ex)
         {
-            await Rollback(rollbackQuerys);
+            var errorCode = ErrorCode.Account_Fail_InsertDefaultItem;
 
-            if (ex.InnerException is AffectedRowCountOutOfRangeException)
-            {
-                _logger.ZLogDebugWithPayload(new { Type = "InsertDefaultItem", ErrorCode = ErrorCode.Account_Fail_InsertDefaultItem, UserId = userId, Exception = "AffectedRowCountOutOfRangeException" }, "Failed");
-            } else
-            {
-                _logger.ZLogDebugWithPayload(new { Type = "InsertDefaultItem", ErrorCode = ErrorCode.Account_Fail_InsertDefaultItem, UserId = userId, Exception = ex.GetType().ToString() }, "Failed");
-            }
+            await Rollback(errorCode, rollbackQuerys);
 
-            return ErrorCode.Account_Fail_InsertDefaultItem;
+            _logger.ZLogDebugWithPayload(EventIdGenerator.Create(errorCode), ex,
+                                         new { UserId = userId }, "Failed");
+
+            return errorCode;
         }
     }
 
-    async Task Rollback(List<SqlKata.Query> rollbackQuerys)
+    async Task Rollback(ErrorCode errorCode, List<SqlKata.Query> rollbackQuerys)
     {
         foreach (var query in rollbackQuerys)
         {
             var affectedRowCount = await query.DeleteAsync();
-            _logger.ZLogDebugWithPayload(new { Type = "Rollback", Query = _queryFactory.Compiler.Compile(query).RawSql, AffectedRowCount = affectedRowCount }, "Rollback");
+
+            _logger.ZLogDebugWithPayload(EventIdGenerator.Create(errorCode),
+                                         new { Query = _queryFactory.Compiler.Compile(query).RawSql,
+                                               AffectedRowCount = affectedRowCount }, "Rollback");
         }
     }
 
     async Task<AccountModel?> GetUserData(Int64 userId)
     {
-        var userData = (await _queryFactory.Query("user_basicinfo")
-            .Where("userId", userId).GetAsync<AccountModel>()).FirstOrDefault();
+        var userData = (await _queryFactory.Query("user_basicinfo").Where("userId", userId)
+                                           .GetAsync<AccountModel>()).FirstOrDefault();
 
         return userData;
     }
 
     async Task<AttendanceModel?> GetAttendData(Int64 userId)
     {
-        var attendData = (await _queryFactory.Query("user_attendance")
-            .Where("userId", userId).GetAsync<AttendanceModel>()).FirstOrDefault();
+        var attendData = (await _queryFactory.Query("user_attendance").Where("userId", userId)
+                                             .GetAsync<AttendanceModel>()).FirstOrDefault();
 
         return attendData;
     }
 
     async Task<FarmInfoModel?> GetFarmInfoData(Int64 userId)
     {
-        var farmInfoData = (await _queryFactory.Query("farm_info")
-            .Where("userId", userId).GetAsync<FarmInfoModel>()).FirstOrDefault();
+        var farmInfoData = (await _queryFactory.Query("farm_info").Where("userId", userId)
+                                               .GetAsync<FarmInfoModel>()).FirstOrDefault();
 
         return farmInfoData;
     }

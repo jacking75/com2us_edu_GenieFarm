@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using Org.BouncyCastle.Asn1.Ocsp;
+using Org.BouncyCastle.Crypto.Operators;
 using ZLogger;
 
 [ApiController]
@@ -44,7 +45,7 @@ public class AccountController : ControllerBase
         // GameDB에 기본 게임 데이터 생성
         var errorCode = await _gameDb.CreateDefaultData(request.PlayerID, request.Nickname);
 
-        LogResult(errorCode, "CreateDefaultData", request.PlayerID, request.AuthToken);
+        LogResult(errorCode, "Create", request.PlayerID, request.AuthToken);
         return new ResCreateDTO() { Result = errorCode };
     }
 
@@ -72,60 +73,32 @@ public class AccountController : ControllerBase
         }
 
         // 게임 데이터 로드
-        var defaultDataResult = await _gameDb.GetDefaultDataByUserId(userId);
-        if (defaultDataResult.Item1 != ErrorCode.None)
+        (var defaultDataResult, var defaultData) = await _gameDb.GetDefaultDataByUserId(userId);
+        if (defaultDataResult != ErrorCode.None)
         {
-            return new ResLoginDTO() { Result = defaultDataResult.Item1 };
+            return new ResLoginDTO() { Result = defaultDataResult };
         }
 
         // 최종 로그인 시각 갱신
         if (!await _gameDb.UpdateLastLoginAt(userId))
         {
-            _logger.ZLogDebugWithPayload(new { Type = "UpdateLastLoginAt",
-                ErrorCode = ErrorCode.Account_Fail_UpdateLastLogin,
-                PlayerID = request.PlayerID, UserID = userId, AuthToken = request.AuthToken }, "Failed");
+            return new ResLoginDTO() { Result = ErrorCode.Account_Fail_UpdateLastLogin };
         }
 
-        _logger.ZLogInformationWithPayload(new { Type = "Login",
-            PlayerID = request.PlayerID, UserID = userId,
-            AuthToken = request.AuthToken }, "Statistic");
-
-        return new ResLoginDTO() { Result = ErrorCode.None, DefaultData = defaultDataResult.Item2, AuthToken = token };
+        LogResult(ErrorCode.None, "Login", request.PlayerID, request.AuthToken);
+        return new ResLoginDTO() { Result = ErrorCode.None, DefaultData = defaultData, AuthToken = token };
     }
-
-    //[HttpPost("logout")]
-    //public async Task<ResLogoutDTO> Logout(ReqLogoutDTO request)
-    //{
-    //    if (!await _redisDb.DeleteSessionDataAsync(request.AuthID, request.AuthToken, request.UserID))
-    //    {
-    //        return new ResLogoutDTO() { Result = ErrorCode.LogoutFail };
-    //    }
-
-    //    return new ResLogoutDTO() { Result = ErrorCode.None };
-    //}
-
-    //[HttpPut("nickname")]
-    //public async Task<ResChangeNicknameDTO> ChangeNickname(ReqChangeNicknameDTO request)
-    //{
-    //    // 유저 닉네임 변경
-    //    if (!(await _gameDb.TryChangeNickname(request.AuthID, request.Nickname)))
-    //    {
-    //        // 중복 닉네임
-    //        return new ResChangeNicknameDTO() { Result = ErrorCode.DuplicateNickname };
-    //    }
-
-    //    // 변경 성공
-    //    return new ResChangeNicknameDTO() { Result = ErrorCode.None };
-    //}
 
     void LogResult(ErrorCode errorCode, string method, string playerId, string authToken)
     {
         if (errorCode != ErrorCode.None)
         {
-            _logger.ZLogDebugWithPayload(new { Type = method, ErrorCode = errorCode, PlayerID = playerId, AuthToken = authToken }, "Failed");
+            _logger.ZLogDebugWithPayload(EventIdGenerator.Create((UInt16)errorCode, method),
+                                         new { PlayerID = playerId, AuthToken = authToken }, "Failed");
         } else
         {
-            _logger.ZLogInformationWithPayload(new { Type = method, PlayerID = playerId, AuthToken = authToken }, "Statistic");
+            _logger.ZLogInformationWithPayload(EventIdGenerator.Create(0, method),
+                                               new { PlayerID = playerId, AuthToken = authToken }, "Statistic");
         }
     }
 
@@ -140,7 +113,14 @@ public class AccountController : ControllerBase
             // 응답 체크
             if (hiveResponse == null || hiveResponse.StatusCode != HttpStatusCode.OK)
             {
-                _logger.ZLogDebugWithPayload(new { Type = "AuthCheck", ErrorCode = ErrorCode.Hive_Fail_AuthCheck, PlayerID = playerID, AuthToken = authToken, StatusCode = hiveResponse == null? 0 : hiveResponse.StatusCode }, "Failed");
+                var statusCode = hiveResponse == null ? 0 : hiveResponse.StatusCode;
+
+                var errorCode = ErrorCode.Hive_Fail_InvalidResponse;
+
+                _logger.ZLogDebugWithPayload(EventIdGenerator.Create(errorCode),
+                                             new { PlayerID = playerID, AuthToken = authToken,
+                                                   StatusCode = statusCode }, "Failed");
+
                 return false;
             }
 
@@ -148,7 +128,11 @@ public class AccountController : ControllerBase
             var authResult = await hiveResponse.Content.ReadFromJsonAsync<ErrorCodeDTO>();
             if (authResult == null || authResult.Result != ErrorCode.None)
             {
-                _logger.ZLogDebugWithPayload(new { Type = "AuthCheck", ErrorCode = ErrorCode.Hive_Fail_AuthCheck, PlayerID = playerID, AuthToken = authToken}, "Failed");
+                var errorCode = ErrorCode.Hive_Fail_AuthCheck;
+
+                _logger.ZLogDebugWithPayload(EventIdGenerator.Create(errorCode),
+                                             new { PlayerID = playerID, AuthToken = authToken}, "Failed");
+
                 return false;
             }
 
@@ -156,7 +140,11 @@ public class AccountController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.ZLogDebugWithPayload(new { Type = "AuthCheck", ErrorCode = ErrorCode.Hive_Fail_AuthCheck, PlayerID = playerID, AuthToken = authToken, Exception = ex.GetType().ToString() }, "Failed");
+            var errorCode = ErrorCode.Hive_Fail_AuthCheckException;
+
+            _logger.ZLogDebugWithPayload(EventIdGenerator.Create(errorCode), ex,
+                                         new { PlayerID = playerID, AuthToken = authToken }, "Failed");
+
             return false;
         }
     }
@@ -178,6 +166,7 @@ public class AccountController : ControllerBase
 
         public static String CreateAuthToken()
         {
+            // 랜덤하게 토큰을 생성
             var bytes = new Byte[25];
             using (var random = RandomNumberGenerator.Create())
             {
