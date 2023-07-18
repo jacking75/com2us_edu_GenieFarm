@@ -62,26 +62,26 @@ public partial class GameDb : IGameDb
         return ErrorCode.None;
     }
 
-    public async Task<Tuple<ErrorCode, DefaultDataDTO?>> GetDefaultDataByUserId(Int64 userId)
+    public async Task<Tuple<ErrorCode, DefaultDataDTO?>> GetDefaultDataByPlayerId(string playerId)
     {
         var result = new DefaultDataDTO();
 
         // 기본 유저 정보 로드
-        result.UserData = await GetUserData(userId);
+        result.UserData = await GetUserData(playerId);
         if (result.UserData == null)
         {
             return new Tuple<ErrorCode, DefaultDataDTO?>(ErrorCode.Account_Fail_UserInfoNotExists, null);
         }
 
         // 출석부 정보 로드
-        result.AttendData = await GetAttendData(userId);
+        result.AttendData = await GetAttendData(result.UserData.UserId);
         if (result.AttendData == null)
         {
             return new Tuple<ErrorCode, DefaultDataDTO?>(ErrorCode.Account_Fail_AttendDataNotExists, null);
         }
 
         // 농장 기본 정보 로드
-        result.FarmInfoData = await GetFarmInfoData(userId);
+        result.FarmInfoData = await GetFarmInfoData(result.UserData.UserId);
         if (result.FarmInfoData == null)
         {
             return new Tuple<ErrorCode, DefaultDataDTO?>(ErrorCode.Account_Fail_FarmInfoNotExists, null);
@@ -243,9 +243,9 @@ public partial class GameDb : IGameDb
         }
     }
 
-    async Task<AccountModel?> GetUserData(Int64 userId)
+    async Task<AccountModel?> GetUserData(string playerId)
     {
-        var userData = (await _queryFactory.Query("user_basicinfo").Where("userId", userId)
+        var userData = (await _queryFactory.Query("user_basicinfo").Where("PlayerId", playerId)
                                            .GetAsync<AccountModel>()).FirstOrDefault();
 
         return userData;

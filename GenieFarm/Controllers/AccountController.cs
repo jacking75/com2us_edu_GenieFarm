@@ -55,34 +55,27 @@ public class AccountController : ControllerBase
         // 하이브 서버에 인증 요청
         if (!await AuthCheck(request.PlayerID, request.AuthToken))
         {
-            return new ResLoginDTO() { Result = ErrorCode.Hive_Fail_AuthCheck };
-        }
-
-        // GameDB에 해당 PlayerID로 된 계정 데이터가 존재하는지 확인
-        var userId = await _gameDb.GetUserIdByPlayerId(request.PlayerID);
-        if (0 == await _gameDb.GetUserIdByPlayerId(request.PlayerID))
-        {
-            return new ResLoginDTO() { Result = ErrorCode.Account_Fail_UserNotExists };
-        }
-
-        // 토큰 생성 및 Redis에 세팅
-        var token = Security.CreateAuthToken();
-        if (ErrorCode.None != await SetTokenOnRedis(userId, token))
-        {
-            return new ResLoginDTO() { Result = ErrorCode.Redis_Fail_SetToken };
+            return new ResLoginDTO() { Result = ErrorCode.Hive_Fail_AuthCheckOnLogin };
         }
 
         // 게임 데이터 로드
-        (var defaultDataResult, var defaultData) = await _gameDb.GetDefaultDataByUserId(userId);
+        (var defaultDataResult, var defaultData) = await _gameDb.GetDefaultDataByPlayerId(request.PlayerID);
         if (defaultDataResult != ErrorCode.None)
         {
             return new ResLoginDTO() { Result = defaultDataResult };
         }
 
         // 최종 로그인 시각 갱신
-        if (!await _gameDb.UpdateLastLoginAt(userId))
+        if (!await _gameDb.UpdateLastLoginAt(defaultData!.UserData!.UserId))
         {
             return new ResLoginDTO() { Result = ErrorCode.Account_Fail_UpdateLastLogin };
+        }
+
+        // 토큰 생성 및 Redis에 세팅
+        var token = Security.CreateAuthToken();
+        if (ErrorCode.None != await SetTokenOnRedis(defaultData!.UserData!.UserId, token))
+        {
+            return new ResLoginDTO() { Result = ErrorCode.Redis_Fail_SetToken };
         }
 
         LogResult(ErrorCode.None, "Login", request.PlayerID, request.AuthToken);
@@ -152,7 +145,7 @@ public class AccountController : ControllerBase
     async Task<ErrorCode> SetTokenOnRedis(Int64 userId, string sessionToken)
     {
         // 같은 키의 토큰이 있어도 무조건 Overwrite하여 기존 토큰을 무효화
-        if (!await _redisDb.SetAsync(userId, sessionToken, TimeSpan.FromDays(7)))
+        if (!await _redisDb.SetAsync(userId, sessionToken, TimeSpan.FromHours(10)))
         {
             return ErrorCode.Redis_Fail_SetToken;
         }

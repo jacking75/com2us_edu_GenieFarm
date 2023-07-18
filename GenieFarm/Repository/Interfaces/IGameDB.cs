@@ -1,7 +1,7 @@
 public interface IGameDb
 {
     // GameDb_User.cs
-    public Task<Tuple<ErrorCode, DefaultDataDTO?>> GetDefaultDataByUserId(Int64 userId);
+    public Task<Tuple<ErrorCode, DefaultDataDTO?>> GetDefaultDataByPlayerId(string playerId);
     public Task<ErrorCode> CreateDefaultData(string playerId, string nickname);
     public Task<Int64> GetUserIdByPlayerId(string playerId);
     public Task<bool> UpdateLastLoginAt(Int64 userId);
