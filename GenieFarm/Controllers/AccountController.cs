@@ -122,6 +122,7 @@ public class AccountController : ControllerBase
             // 응답 체크
             if (hiveResponse == null || hiveResponse.StatusCode != HttpStatusCode.OK)
             {
+                _logger.ZLogDebugWithPayload(new { Type = "AuthCheck", ErrorCode = ErrorCode.AuthCheckFail, PlayerID = playerID, AuthToken = authToken, StatusCode = hiveResponse == null? 0 : hiveResponse.StatusCode }, "Failed");
                 return false;
             }
 
@@ -129,6 +130,7 @@ public class AccountController : ControllerBase
             var authResult = await hiveResponse.Content.ReadFromJsonAsync<ErrorCodeDTO>();
             if (authResult == null || authResult.Result != ErrorCode.None)
             {
+                _logger.ZLogDebugWithPayload(new { Type = "AuthCheck", ErrorCode = ErrorCode.AuthCheckFail, PlayerID = playerID, AuthToken = authToken}, "Failed");
                 return false;
             }
 
