@@ -2,10 +2,10 @@ POST http://localhost:5218/api/account/login
 Content-Type: application/json
 
 {
-    "AuthID" : "test06",
-    "AuthToken" : "P2H95LNF6NT8UC",
-    "AppVersion" : "0",
-    "MasterDataVersion" : "0"
+    "PlayerID" : "test04",
+    "AuthToken" : "94ILRSD4LRXE6N",
+    "AppVersion" : "0.1",
+    "MasterDataVersion" : "0.1"
 }
 
 ###
@@ -13,98 +13,8 @@ POST http://localhost:5218/api/account/create
 Content-Type: application/json
 
 {
-    "AuthID" : "test01",
-    "AuthToken" : "DUWPQCFN5DQF4P",
+    "PlayerID" : "test04",
+    "AuthToken" : "94ILRSD4LRXE6N",
     "AppVersion" : "0.1",
-    "MasterDataVersion" : "0.1",
-    "Nickname" : "Genie"
-}
-
-###
-POST http://localhost:5218/api/account/logout
-Content-Type: application/json
-
-{
-    "AuthID" : "test02",
-    "AuthToken" : "DYG5R07M7RUV07",
-    "UserID" : 4
-}
-
-###
-PUT http://localhost:5218/api/account/nickname
-Content-Type: application/json
-
-{
-    "AuthID" : "test06",
-    "AuthToken" : "P2H95LNF6NT8UC",
-    "UserID" : 18,
-    "Nickname" : "Dosoon"
-}
-
-###
-POST http://localhost:5218/api/attendance
-Content-Type: application/json
-
-{
-    "AuthID" : "test06",
-    "AuthToken" : "P2H95LNF6NT8UC",
-    "UserID" : 18
-}
-
-###
-POST http://localhost:5218/api/mail/send
-Content-Type: application/json
-
-{
-    "AuthID" : "test02",
-    "AuthToken" : "DYG5R07M7RUV07",
-    "UserID" : 4,
-
-    "ReceiverID" : 1,
-    "Title" : "편지",
-    "Content" : "안녕하세요?"
-}
-
-###
-POST http://localhost:5218/api/mail/open
-Content-Type: application/json
-
-{
-    "AuthID" : "test01",
-    "AuthToken" : "DUWPQCFN5DQF4P",
-    "UserID" : 1,
-    "Page" : 1
-}
-
-###
-POST http://localhost:5218/api/mail/read
-Content-Type: application/json
-
-{
-    "AuthID" : "test02",
-    "AuthToken" : "DYG5R07M7RUV07",
-    "UserID" : 4,
-    "MailID" : 95
-}
-
-###
-POST http://localhost:5218/api/mail/receive
-Content-Type: application/json
-
-{
-    "AuthID" : "test01",
-    "AuthToken" : "DUWPQCFN5DQF4P",
-    "UserID" : 1,
-    "MailID" : 97
-}
-
-###
-DELETE http://localhost:5218/api/mail/delete
-Content-Type: application/json
-
-{
-    "AuthID" : "test02",
-    "AuthToken" : "DYG5R07M7RUV07",
-    "UserID" : 4,
-    "MailID" : 95
+    "MasterDataVersion" : "0.1"
 }
