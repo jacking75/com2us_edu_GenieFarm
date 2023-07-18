@@ -6,7 +6,8 @@ public enum ErrorCode : UInt16
     
     Hive_Fail_InvalidResponse = 10,
     Hive_Fail_AuthCheck = 11,
-    Hive_Fail_AuthCheckException = 12,
+    Hive_Fail_AuthCheckOnLogin = 12,
+    Hive_Fail_AuthCheckException = 13,
     
     Redis_Fail_SetToken = 20,
 
