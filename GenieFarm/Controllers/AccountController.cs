@@ -81,7 +81,9 @@ public class AccountController : ControllerBase
         // 최종 로그인 시각 갱신
         if (!await _gameDb.UpdateLastLoginAt(userId))
         {
-            return new ResLoginDTO() { Result = ErrorCode.LastLoginUpdateFailed };
+            _logger.ZLogDebugWithPayload(new { Type = "UpdateLastLoginAt",
+                ErrorCode = ErrorCode.LastLoginUpdateFailed, PlayerID = request.PlayerID,
+                UserID = userId, AuthToken = request.AuthToken }, "Failed");
         }
 
         _logger.ZLogInformationWithPayload(new { Type = "Login",
