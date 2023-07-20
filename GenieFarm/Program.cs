@@ -35,4 +35,4 @@ app.UseAuthCheckMiddleware();
 app.UseRouting();
 app.MapControllers();
 
-app.Run();
+app.Run(app.Configuration["ServerAddress"]);
