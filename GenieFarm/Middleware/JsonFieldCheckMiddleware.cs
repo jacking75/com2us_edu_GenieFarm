@@ -31,7 +31,7 @@ public class JsonFieldCheckMiddleware
             return;
         }
 
-        // JSON 포맷 유효성 검사
+        // JSON 형식이 맞는지 확인하고, 파싱 결과를 doc으로 가져옴
         if (!ValidateJSONFormat(rawBody, out var doc))
         {
             context.Response.StatusCode = 400;
@@ -40,6 +40,7 @@ public class JsonFieldCheckMiddleware
 
         // path에 따라 분기해서 context의 Header에 PlayerId 혹은 UserId, AuthToken, AppVersion, MasterDataVersion을 추가
         // 다음 Middleware에서 Header에 있는 데이터를 가져와 판단하도록 하기 위함
+        // 필수 Field가 하나라도 없다면 400 반환
         if (!SetRequiredFieldOnHeader(doc!, context, requirePlayerId))
         {
             context.Response.StatusCode = 400;
@@ -75,50 +76,6 @@ public class JsonFieldCheckMiddleware
         }
     }
 
-    bool SetRequiredFieldOnHeader(JsonDocument doc, HttpContext context, bool exceptRedisCheck)
-    {
-        try
-        {
-            // Request Path에 따라 PlayerID 혹은 UserID를 가져와 헤더에 추가한다.
-            if (!ValidateIDByPath(doc, exceptRedisCheck, context))
-            {
-                return false;
-            }
-
-            // 토큰 정보를 가져와 헤더에 추가한다.
-            if (!GetTokenString(doc, context))
-            {
-                return false;
-            }
-
-            // 버전 정보를 가져와 헤더에 추가한다.
-            if (!GetVersionString(doc, context))
-            {
-                return false;
-            }
-
-            return true;
-        }
-        catch
-        {
-            _logger.ZLogDebug(EventIdGenerator.Create(ErrorCode.AuthCheck_Fail_GetRequiredField), "Failed");
-
-            return false;
-        }
-    }
-
-    bool ValidateIDByPath(JsonDocument doc, bool exceptPath, HttpContext context)
-    {
-        if (exceptPath)
-        {
-            return ValidatePlayerID(doc, context);
-        }
-        else
-        {
-            return ValidateUserID(doc, context);
-        }
-    }
-
     bool ValidateJSONFormat(string rawBody, out JsonDocument? doc)
     {
         doc = null;
@@ -130,13 +87,57 @@ public class JsonFieldCheckMiddleware
         }
         catch
         {
-            _logger.ZLogDebug(EventIdGenerator.Create(ErrorCode.AuthCheck_Fail_ValidateJSONFormat), "Failed");
+            _logger.ZLogDebug(EventIdGenerator.Create(ErrorCode.JsonFieldCheck_Fail_ValidateJSONFormat), "Failed");
 
             return false;
         }
     }
 
-    bool ValidateUserID(JsonDocument doc, HttpContext context)
+    bool SetRequiredFieldOnHeader(JsonDocument doc, HttpContext context, bool exceptRedisCheck)
+    {
+        try
+        {
+            // Request Path에 따라 PlayerID 혹은 UserID를 가져와 헤더에 추가한다.
+            if (!SetIDByPathOnHeader(doc, exceptRedisCheck, context))
+            {
+                return false;
+            }
+
+            // 토큰 정보를 가져와 헤더에 추가한다.
+            if (!SetTokenStringOnHeader(doc, context))
+            {
+                return false;
+            }
+
+            // 버전 정보를 가져와 헤더에 추가한다.
+            if (!SetVersionStringOnHeader(doc, context))
+            {
+                return false;
+            }
+
+            return true;
+        }
+        catch
+        {
+            _logger.ZLogDebug(EventIdGenerator.Create(ErrorCode.JsonFieldCheck_Fail_GetRequiredField), "Failed");
+
+            return false;
+        }
+    }
+
+    bool SetIDByPathOnHeader(JsonDocument doc, bool exceptPath, HttpContext context)
+    {
+        if (exceptPath)
+        {
+            return SetPlayerIDOnHeader(doc, context);
+        }
+        else
+        {
+            return SetUserIDOnHeader(doc, context);
+        }
+    }
+
+    bool SetUserIDOnHeader(JsonDocument doc, HttpContext context)
     {
         try
         {
@@ -153,13 +154,13 @@ public class JsonFieldCheckMiddleware
         }
         catch
         {
-            _logger.ZLogDebug(EventIdGenerator.Create(ErrorCode.AuthCheck_Fail_ValidateUserID), "Failed");
+            _logger.ZLogDebug(EventIdGenerator.Create(ErrorCode.JsonFieldCheck_Fail_GetUserID), "Failed");
 
             return false;
         }
     }
 
-    bool ValidatePlayerID(JsonDocument doc, HttpContext context)
+    bool SetPlayerIDOnHeader(JsonDocument doc, HttpContext context)
     {
         try
         {
@@ -176,13 +177,13 @@ public class JsonFieldCheckMiddleware
         }
         catch
         {
-            _logger.ZLogDebug(EventIdGenerator.Create(ErrorCode.AuthCheck_Fail_ValidatePlayerID), "Failed");
+            _logger.ZLogDebug(EventIdGenerator.Create(ErrorCode.JsonFieldCheck_Fail_GetPlayerID), "Failed");
 
             return false;
         }
     }
 
-    bool GetTokenString(JsonDocument doc, HttpContext context)
+    bool SetTokenStringOnHeader(JsonDocument doc, HttpContext context)
     {
         try
         {
@@ -200,13 +201,13 @@ public class JsonFieldCheckMiddleware
         }
         catch
         {
-            _logger.ZLogDebug(EventIdGenerator.Create(ErrorCode.AuthCheck_Fail_GetTokenString), "Failed");
+            _logger.ZLogDebug(EventIdGenerator.Create(ErrorCode.JsonFieldCheck_Fail_GetTokenString), "Failed");
 
             return false;
         }
     }
 
-    bool GetVersionString(JsonDocument doc, HttpContext context)
+    bool SetVersionStringOnHeader(JsonDocument doc, HttpContext context)
     {
         try
         {
@@ -231,7 +232,7 @@ public class JsonFieldCheckMiddleware
         }
         catch
         {
-            _logger.ZLogDebug(EventIdGenerator.Create(ErrorCode.AuthCheck_Fail_GetVersionString), "Failed");
+            _logger.ZLogDebug(EventIdGenerator.Create(ErrorCode.JsonFieldCheck_Fail_GetVersionString), "Failed");
 
             return false;
         }
