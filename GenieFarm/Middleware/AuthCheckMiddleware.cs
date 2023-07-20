@@ -54,7 +54,7 @@ public class AuthCheckMiddleware
         if (!exceptRedisCheck)
         {
             // 토큰 유효성 검사
-            if (!await IsValidToken(playerID, authToken, userId))
+            if (!await IsValidToken(userId, authToken))
             {
                 context.Response.StatusCode = 401;
                 return;
@@ -83,7 +83,7 @@ public class AuthCheckMiddleware
             context.Request.EnableBuffering();
             var bodyStream = new StreamReader(context.Request.Body);
             var rawBody = await bodyStream.ReadToEndAsync();
-            context.Request.Body.Position = 0;
+            context.Request.Body.Position = 0;  
 
             return rawBody;
         }
@@ -103,21 +103,15 @@ public class AuthCheckMiddleware
         return false;
     }
 
-    async Task<bool> IsValidToken(string playerId, string authToken, Int64 userId)
+    async Task<bool> IsValidToken(Int64 userId, string authToken)
     {
-        if (playerId == string.Empty || authToken == string.Empty || userId == 0)
+        if (userId == 0 || authToken == string.Empty)
         {
             return false;
         }
 
-        var memoryToken = await _redisDb.GetAsync(playerId);
+        var memoryToken = await _redisDb.GetAsync(userId.ToString());
         if (memoryToken == null)
-        {
-            return false;
-        }
-
-        var memoryUserId = await _redisDb.GetAsync(authToken);
-        if (memoryUserId == null || memoryUserId != userId.ToString())
         {
             return false;
         }
@@ -130,9 +124,9 @@ public class AuthCheckMiddleware
         return true;
     }
 
-    bool IsValidFormattedJSON(string rawBody, out string playerID, out string authToken, out string appVersion, out string masterDataVersion, out Int64 userId, bool exceptRedisCheck)
+    bool IsValidFormattedJSON(string rawBody, out string playerId, out string authToken, out string appVersion, out string masterDataVersion, out Int64 userId, bool exceptRedisCheck)
     {
-        playerID = string.Empty;
+        playerId = string.Empty;
         authToken = string.Empty;
         appVersion = string.Empty;
         masterDataVersion = string.Empty;
@@ -141,30 +135,139 @@ public class AuthCheckMiddleware
         try
         {
             JsonDocument doc = JsonDocument.Parse(rawBody);
-            var playerIDString = doc.RootElement.GetProperty("PlayerID").GetString();
-            var authTokenString = doc.RootElement.GetProperty("AuthToken").GetString();
-            var appVersionString = doc.RootElement.GetProperty("AppVersion").GetString();
-            var masterDataVersionString = doc.RootElement.GetProperty("MasterDataVersion").GetString();
 
-            if (!exceptRedisCheck)
+            // Request Path에 따라 PlayerID 혹은 UserID를 가져온다.
+            if (exceptRedisCheck && !ValidateID(doc, out playerId))
             {
-                userId = doc.RootElement.GetProperty("UserID").GetInt64();
+                return false;
             }
-
-            if (playerIDString == null || authTokenString == null || appVersionString == null || masterDataVersionString == null)
+            else if (!exceptRedisCheck && !ValidateID(doc, out userId))
+            {
+                return false;
+            }
+            
+            // 토큰 정보를 가져온다.
+            if (!GetTokenString(doc, out authToken))
             {
                 return false;
             }
 
-            playerID = playerIDString;
-            authToken = authTokenString;
-            appVersion = appVersionString;
-            masterDataVersion = masterDataVersionString;
+            // 버전 정보를 가져온다.
+            if (!GetVersionString(doc, out appVersion, out masterDataVersion))
+            {
+                return false;
+            }
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.ZLogDebug("Exception In IsValidFormattedJSON");
+            _logger.ZLogDebugWithPayload(EventIdGenerator.Create(ErrorCode.AuthCheck_Fail_ValidateJSONFormat),
+                                         ex, "Failed");
+
+            return false;
+        }
+    }
+
+    bool ValidateID(JsonDocument doc, out Int64 userId)
+    {
+        userId = 0;
+
+        try
+        {
+            userId = doc.RootElement.GetProperty("UserID").GetInt64();
 
             return true;
         }
         catch
         {
+            _logger.ZLogDebugWithPayload(EventIdGenerator.Create(ErrorCode.AuthCheck_Fail_ValidateUserID), "Failed");
+
+            return false;
+        }
+    }
+
+    bool ValidateID(JsonDocument doc, out string playerId)
+    {
+        playerId = string.Empty;
+
+        try
+        {
+            var playerIdString = doc.RootElement.GetProperty("PlayerID").GetString();
+
+            if (playerIdString == null)
+            {
+                return false;
+            }
+
+            playerId = playerIdString;
+
+            return true;
+        }
+        catch
+        {
+            _logger.ZLogDebugWithPayload(EventIdGenerator.Create(ErrorCode.AuthCheck_Fail_ValidatePlayerID), "Failed");
+
+            return false;
+        }
+    }
+
+    bool GetTokenString(JsonDocument doc, out string authToken)
+    {
+        authToken = string.Empty;
+        try
+        {
+            var authTokenString = doc.RootElement.GetProperty("AuthToken").GetString();
+
+            if (authTokenString == null || authTokenString == string.Empty)
+            {
+                return false;
+            }
+
+            authToken = authTokenString;
+
+            return true;
+
+        }
+        catch
+        {
+            _logger.ZLogDebugWithPayload(EventIdGenerator.Create(ErrorCode.AuthCheck_Fail_GetTokenString), "Failed");
+
+            return false;
+        }
+    }
+
+    bool GetVersionString(JsonDocument doc, out string appVersion, out string masterDataVersion)
+    {
+        appVersion = string.Empty;
+        masterDataVersion = string.Empty;
+
+        try
+        {
+            var appVersionString = doc.RootElement.GetProperty("AppVersion").GetString();
+            var masterDataVersionString = doc.RootElement.GetProperty("MasterDataVersion").GetString();
+
+            if (appVersionString == null || appVersionString == string.Empty)
+            {
+                return false;
+            }
+
+            if (masterDataVersionString == null || masterDataVersionString == string.Empty)
+            {
+                return false;
+            }
+
+            appVersion = appVersionString;
+            masterDataVersion = masterDataVersionString;
+
+            return true;
+
+        }
+        catch
+        {
+            _logger.ZLogDebugWithPayload(EventIdGenerator.Create(ErrorCode.AuthCheck_Fail_GetVersionString), "Failed");
+
             return false;
         }
     }
