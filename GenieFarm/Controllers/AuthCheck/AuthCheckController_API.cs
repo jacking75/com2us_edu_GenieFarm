@@ -11,6 +11,19 @@ using ZLogger;
 
 public partial class AuthCheckController : ControllerBase
 {
+    ILogger<AuthCheckController> _logger;
+    IGameDb _gameDb;
+    IRedisDb _redisDb;
+    string _hiveServerUrl;
+
+    public AuthCheckController(ILogger<AuthCheckController> logger, IGameDb gameDb, IRedisDb redisDb, IConfiguration configuration)
+    {
+        _logger = logger;
+        _gameDb = gameDb;
+        _redisDb = redisDb;
+        _hiveServerUrl = configuration.GetSection("HiveServer")["Address"]! + "/authcheck";
+    }
+
     [HttpPost("create")]
     public async Task<ResCreateDTO> Create(ReqCreateDTO request)
     {

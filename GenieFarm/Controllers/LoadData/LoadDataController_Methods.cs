@@ -3,15 +3,6 @@ using ZLogger;
 
 public partial class LoadDataController : ControllerBase
 {
-    ILogger<LoadDataController> _logger;
-    IGameDb _gameDb;
-
-    public LoadDataController(ILogger<LoadDataController> logger, IGameDb gameDb)
-    {
-        _logger = logger;
-        _gameDb = gameDb;
-    }
-
     void LogResult(ErrorCode errorCode, string method, Int64 userId, string authToken)
     {
         if (errorCode != ErrorCode.None)

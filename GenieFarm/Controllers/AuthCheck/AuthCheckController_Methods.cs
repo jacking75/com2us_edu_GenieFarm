@@ -5,20 +5,6 @@ using ZLogger;
 
 public partial class AuthCheckController : ControllerBase
 {
-    ILogger<AuthCheckController> _logger;
-    IGameDb _gameDb;
-    IRedisDb _redisDb;
-    string _hiveServerUrl;
-
-
-    public AuthCheckController(ILogger<AuthCheckController> logger, IGameDb gameDb, IRedisDb redisDb, IConfiguration configuration)
-    {
-        _logger = logger;
-        _gameDb = gameDb;
-        _redisDb = redisDb;
-        _hiveServerUrl = configuration.GetSection("HiveServer")["Address"]! + "/authcheck";
-    }
-
     void LogResult(ErrorCode errorCode, string method, Int64 userId, string authToken)
     {
         if (errorCode != ErrorCode.None)

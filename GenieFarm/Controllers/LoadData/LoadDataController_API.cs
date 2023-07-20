@@ -5,6 +5,15 @@
 
 public partial class LoadDataController : ControllerBase
 {
+    ILogger<LoadDataController> _logger;
+    IGameDb _gameDb;
+
+    public LoadDataController(ILogger<LoadDataController> logger, IGameDb gameDb)
+    {
+        _logger = logger;
+        _gameDb = gameDb;
+    }
+
     [HttpPost("defaultData")]
     public async Task<ResDefaultDataDTO> LoadDefaultData(ReqDefaultDataDTO request)
     {
