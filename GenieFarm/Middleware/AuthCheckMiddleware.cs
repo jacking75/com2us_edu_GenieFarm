@@ -11,7 +11,7 @@ public class AuthCheckMiddleware
     // Redis 토큰 저장여부 검사를 제외하는 Path들
     readonly HashSet<string> _tokenExceptPath = new HashSet<string>()
     {
-        "/api/account/login", "/api/account/create",
+        "/api/auth/login", "/api/auth/create",
     };
 
     public AuthCheckMiddleware(RequestDelegate next, ILogger<AuthCheckMiddleware> logger, IRedisDb redisDb, IMasterDb masterDb)
@@ -36,8 +36,16 @@ public class AuthCheckMiddleware
             return;
         }
 
-        // JSON 포맷 유효성 검사 : PlayerID값과 authToken값을 가져옴
-        if (!IsValidFormattedJSON(rawBody, out string playerID, out string authToken, out string appVersion, out string masterDataVersion, out Int64 userId, exceptRedisCheck))
+        // JSON 포맷 유효성 검사
+        if (!ValidateJSONFormat(rawBody, out var doc))
+        {
+            context.Response.StatusCode = 400;
+            return;
+        }
+
+        // path에 따라 분기해서 PlayerId, UserId, AuthToken, AppVersion, MasterDataVersion을 가져옴
+        if (!GetRequiredField(doc!, out string playerID, out Int64 userId, out string authToken,
+                              out string appVersion, out string masterDataVersion, exceptRedisCheck))
         {
             context.Response.StatusCode = 400;
             return;
@@ -54,14 +62,14 @@ public class AuthCheckMiddleware
         if (!exceptRedisCheck)
         {
             // 토큰 유효성 검사
-            if (!await IsValidToken(userId, authToken))
+            if (!await ValidateToken(userId, authToken))
             {
                 context.Response.StatusCode = 401;
                 return;
             }
 
             // 중복 요청 검사
-            if (await IsOverlappedRequest(authToken, path))
+            if (await CheckOverlappedRequest(authToken, path))
             {
                 context.Response.StatusCode = 429;
                 return;
@@ -76,6 +84,7 @@ public class AuthCheckMiddleware
             await _redisDb.ReleaseRequest(authToken, path);
         }
     }
+
     async Task<string?> EnableBuffering(HttpContext context)
     {
         try
@@ -93,7 +102,7 @@ public class AuthCheckMiddleware
         }
     }
 
-    async Task<bool> IsOverlappedRequest(string authToken, string path)
+    async Task<bool> CheckOverlappedRequest(string authToken, string path)
     {
         if (!await _redisDb.AcquireRequest(authToken, path))
         {
@@ -103,7 +112,7 @@ public class AuthCheckMiddleware
         return false;
     }
 
-    async Task<bool> IsValidToken(Int64 userId, string authToken)
+    async Task<bool> ValidateToken(Int64 userId, string authToken)
     {
         if (userId == 0 || authToken == string.Empty)
         {
@@ -124,7 +133,7 @@ public class AuthCheckMiddleware
         return true;
     }
 
-    bool IsValidFormattedJSON(string rawBody, out string playerId, out string authToken, out string appVersion, out string masterDataVersion, out Int64 userId, bool exceptRedisCheck)
+    bool GetRequiredField(JsonDocument doc, out string playerId, out Int64 userId, out string authToken, out string appVersion, out string masterDataVersion, bool exceptRedisCheck)
     {
         playerId = string.Empty;
         authToken = string.Empty;
@@ -134,14 +143,8 @@ public class AuthCheckMiddleware
 
         try
         {
-            JsonDocument doc = JsonDocument.Parse(rawBody);
-
             // Request Path에 따라 PlayerID 혹은 UserID를 가져온다.
-            if (exceptRedisCheck && !ValidateID(doc, out playerId))
-            {
-                return false;
-            }
-            else if (!exceptRedisCheck && !ValidateID(doc, out userId))
+            if (!ValidateIDByPath(doc, exceptRedisCheck, out playerId, out userId))
             {
                 return false;
             }
@@ -160,11 +163,41 @@ public class AuthCheckMiddleware
 
             return true;
         }
-        catch (Exception ex)
+        catch
         {
-            _logger.ZLogDebug("Exception In IsValidFormattedJSON");
-            _logger.ZLogDebugWithPayload(EventIdGenerator.Create(ErrorCode.AuthCheck_Fail_ValidateJSONFormat),
-                                         ex, "Failed");
+            _logger.ZLogDebug(EventIdGenerator.Create(ErrorCode.AuthCheck_Fail_GetRequiredField), "Failed");
+
+            return false;
+        }
+    }
+
+    bool ValidateIDByPath(JsonDocument doc, bool exceptPath, out string playerId, out Int64 userId)
+    {
+        playerId = string.Empty;
+        userId = 0;
+
+        if (exceptPath)
+        {
+            return ValidateID(doc, out playerId);
+        }
+        else
+        {
+            return ValidateID(doc, out userId);
+        }
+    }
+
+    bool ValidateJSONFormat(string rawBody, out JsonDocument? doc)
+    {
+        doc = null;
+        try
+        {
+            doc = JsonDocument.Parse(rawBody);
+
+            return true;
+        }
+        catch
+        {
+            _logger.ZLogDebug(EventIdGenerator.Create(ErrorCode.AuthCheck_Fail_ValidateJSONFormat), "Failed");
 
             return false;
         }
@@ -182,7 +215,7 @@ public class AuthCheckMiddleware
         }
         catch
         {
-            _logger.ZLogDebugWithPayload(EventIdGenerator.Create(ErrorCode.AuthCheck_Fail_ValidateUserID), "Failed");
+            _logger.ZLogDebug(EventIdGenerator.Create(ErrorCode.AuthCheck_Fail_ValidateUserID), "Failed");
 
             return false;
         }
@@ -207,7 +240,7 @@ public class AuthCheckMiddleware
         }
         catch
         {
-            _logger.ZLogDebugWithPayload(EventIdGenerator.Create(ErrorCode.AuthCheck_Fail_ValidatePlayerID), "Failed");
+            _logger.ZLogDebug(EventIdGenerator.Create(ErrorCode.AuthCheck_Fail_ValidatePlayerID), "Failed");
 
             return false;
         }
@@ -232,7 +265,7 @@ public class AuthCheckMiddleware
         }
         catch
         {
-            _logger.ZLogDebugWithPayload(EventIdGenerator.Create(ErrorCode.AuthCheck_Fail_GetTokenString), "Failed");
+            _logger.ZLogDebug(EventIdGenerator.Create(ErrorCode.AuthCheck_Fail_GetTokenString), "Failed");
 
             return false;
         }
@@ -266,7 +299,7 @@ public class AuthCheckMiddleware
         }
         catch
         {
-            _logger.ZLogDebugWithPayload(EventIdGenerator.Create(ErrorCode.AuthCheck_Fail_GetVersionString), "Failed");
+            _logger.ZLogDebug(EventIdGenerator.Create(ErrorCode.AuthCheck_Fail_GetVersionString), "Failed");
 
             return false;
         }
