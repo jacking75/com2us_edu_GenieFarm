@@ -4,4 +4,14 @@ public static class MiddlewareExtensions
     {
         return builder.UseMiddleware<AuthCheckMiddleware>();
     }
+
+    public static IApplicationBuilder UseJsonFieldCheckMiddleware(this IApplicationBuilder builder)
+    {
+        return builder.UseMiddleware<JsonFieldCheckMiddleware>();
+    }
+
+    public static IApplicationBuilder UseVersionCheckMiddleware(this IApplicationBuilder builder)
+    {
+        return builder.UseMiddleware<VersionCheckMiddleware>();
+    }
 }
