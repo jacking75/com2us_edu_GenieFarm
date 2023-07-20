@@ -44,11 +44,27 @@ public class MasterDb : IMasterDb {
         }
         catch
         {
-            _logger.ZLogInformationWithPayload(new { ErrorCode = ErrorCode.MasterDB_Fail_LoadData }, "MasterDB Initializing Fail");
+            _logger.ZLogInformationWithPayload(new { ErrorCode = ErrorCode.MasterDB_Fail_LoadData }, "Failed");
             return false;
         }
 
-        if (_attendanceRewardList.Count == 0)
+        if (!ValidateMasterData())
+        {
+            _logger.ZLogInformationWithPayload(new { ErrorCode = ErrorCode.MasterDB_Fail_InvalidData }, "Failed");
+            return false;
+        }
+
+        return true;
+    }
+
+    bool ValidateMasterData()
+    {
+        if (_attendanceRewardList == null || _defaultFarmData == null || _defaultFarmItemList == null || _itemAttributeList == null || _itemTypeList == null || _version == null)
+        {
+            return false;
+        }
+
+        if (_attendanceRewardList.Count == 0 || _defaultFarmItemList.Count == 0 || _itemAttributeList.Count == 0 || _itemTypeList.Count == 0)
         {
             return false;
         }

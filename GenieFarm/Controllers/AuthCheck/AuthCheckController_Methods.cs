@@ -63,11 +63,6 @@ public partial class AuthCheckController : ControllerBase
             var authResult = await hiveResponse.Content.ReadFromJsonAsync<ErrorCodeDTO>();
             if (authResult == null || authResult.Result != ErrorCode.None)
             {
-                var errorCode = ErrorCode.Hive_Fail_AuthCheck;
-
-                _logger.ZLogDebugWithPayload(EventIdGenerator.Create(errorCode),
-                                             new { PlayerID = playerID, AuthToken = authToken }, "Failed");
-
                 return false;
             }
 
@@ -89,7 +84,12 @@ public partial class AuthCheckController : ControllerBase
         // 같은 키의 토큰이 있어도 무조건 Overwrite하여 기존 토큰을 무효화
         if (!await _redisDb.SetAsync(userId, sessionToken, TimeSpan.FromHours(10)))
         {
-            return ErrorCode.Redis_Fail_SetToken;
+            var errorCode = ErrorCode.Redis_Fail_SetToken;
+
+            _logger.ZLogDebugWithPayload(EventIdGenerator.Create(errorCode),
+                                         new { UserID = userId, AuthToken = sessionToken }, "Failed");
+
+            return errorCode;
         }
 
         return ErrorCode.None;

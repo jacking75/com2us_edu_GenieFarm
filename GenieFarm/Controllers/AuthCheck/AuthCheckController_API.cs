@@ -30,13 +30,16 @@ public partial class AuthCheckController : ControllerBase
         // 하이브 서버에 인증 요청
         if (!await AuthCheckToHive(request.PlayerID, request.AuthToken))
         {
-            return new ResCreateDTO() { Result = ErrorCode.Hive_Fail_AuthCheck };
+            _logger.ZLogDebugWithPayload(EventIdGenerator.Create(ErrorCode.Hive_Fail_AuthCheck),
+                                         new { PlayerID = request.PlayerID, AuthToken = request.AuthToken }, "Failed");
+
+            return new ResCreateDTO() { Result = ErrorCode.Login_Fail_HiveAuthCheck };
         }
 
         // GameDB에 해당 PlayerID로 된 계정 데이터가 존재하는지 확인
         if (0 != await _gameDb.GetUserIdByPlayerId(request.PlayerID))
         {
-            return new ResCreateDTO() { Result = ErrorCode.Account_Fail_UserAlreadyExists };
+            return new ResCreateDTO() { Result = ErrorCode.Create_Fail_UserAlreadyExists };
         }
 
         // GameDB에 기본 게임 데이터 생성
@@ -52,7 +55,10 @@ public partial class AuthCheckController : ControllerBase
         // 하이브 서버에 인증 요청
         if (!await AuthCheckToHive(request.PlayerID, request.AuthToken))
         {
-            return new ResLoginDTO() { Result = ErrorCode.Hive_Fail_AuthCheckOnLogin };
+            _logger.ZLogDebugWithPayload(EventIdGenerator.Create(ErrorCode.Hive_Fail_AuthCheckOnLogin),
+                                         new { PlayerID = request.PlayerID, AuthToken = request.AuthToken }, "Failed");
+
+            return new ResLoginDTO() { Result = ErrorCode.Login_Fail_HiveAuthCheck };
         }
 
         // 게임 데이터 로드
@@ -65,14 +71,14 @@ public partial class AuthCheckController : ControllerBase
         // 최종 로그인 시각 갱신
         if (!await _gameDb.UpdateLastLoginAt(defaultData!.UserData!.UserId))
         {
-            return new ResLoginDTO() { Result = ErrorCode.Account_Fail_UpdateLastLogin };
+            return new ResLoginDTO() { Result = ErrorCode.Login_Fail_UpdateLastLogin };
         }
 
         // 토큰 생성 및 Redis에 세팅
         var token = Security.CreateAuthToken();
         if (ErrorCode.None != await SetTokenOnRedis(defaultData!.UserData!.UserId, token))
         {
-            return new ResLoginDTO() { Result = ErrorCode.Redis_Fail_SetToken };
+            return new ResLoginDTO() { Result = ErrorCode.Login_Fail_TokenSetting };
         }
 
         LogResult(ErrorCode.None, "Login", request.PlayerID, request.AuthToken);
@@ -85,7 +91,10 @@ public partial class AuthCheckController : ControllerBase
         // Redis에서 토큰 삭제
         if (false == await _redisDb.DeleteAsync(request.UserID.ToString()))
         {
-            return new ResLogoutDTO() { Result = ErrorCode.Redis_Fail_DeleteToken };
+            _logger.ZLogDebugWithPayload(EventIdGenerator.Create(ErrorCode.Redis_Fail_DeleteToken),
+                                         new { UserID = request.UserID, AuthToken = request.AuthToken }, "Failed");
+
+            return new ResLogoutDTO() { Result = ErrorCode.Logout_Fail_DeleteToken };
         }
 
         LogResult(ErrorCode.None, "Logout", request.UserID, request.AuthToken);

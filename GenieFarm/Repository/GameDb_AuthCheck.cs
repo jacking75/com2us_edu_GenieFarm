@@ -35,28 +35,28 @@ public partial class GameDb : IGameDb
         (var defaultUserDataResult, var userId) = await CreateDefaultUserData(playerId, nickname, rollbackQuerys);
         if (defaultUserDataResult != ErrorCode.None)
         {
-            return defaultUserDataResult;
+            return ErrorCode.GameDB_Fail_CreateDefaultData;
         }
 
         // 유저 출석 정보 생성
         var attendanceInsertResult = await CreateDefaultAttendanceData(userId, rollbackQuerys);
         if (attendanceInsertResult != ErrorCode.None)
         {
-            return attendanceInsertResult;
+            return ErrorCode.GameDB_Fail_CreateDefaultData;
         }
 
         // 농장 기본 정보 생성
         var defaultFarmDataResult = await CreateDefaultFarmData(userId, rollbackQuerys);
         if (defaultFarmDataResult != ErrorCode.None)
         {
-            return defaultFarmDataResult;
+            return ErrorCode.GameDB_Fail_CreateDefaultData;
         }
 
         // 유저 기본 아이템 생성
         var defaultFarmItemResult = await InsertDefaultItem(userId, rollbackQuerys);
         if (defaultFarmItemResult != ErrorCode.None)
         {
-            return defaultFarmItemResult;
+            return ErrorCode.GameDB_Fail_CreateDefaultData;
         }
 
         return ErrorCode.None;
@@ -70,21 +70,21 @@ public partial class GameDb : IGameDb
         result.UserData = await GetUserData(playerId);
         if (result.UserData == null)
         {
-            return new Tuple<ErrorCode, DefaultDataDTO?>(ErrorCode.Account_Fail_UserInfoNotExists, null);
+            return new Tuple<ErrorCode, DefaultDataDTO?>(ErrorCode.GameDB_Fail_UserInfoNotExistsByPlayerID, null);
         }
 
         // 출석부 정보 로드
         result.AttendData = await GetAttendData(result.UserData.UserId);
         if (result.AttendData == null)
         {
-            return new Tuple<ErrorCode, DefaultDataDTO?>(ErrorCode.Account_Fail_AttendDataNotExists, null);
+            return new Tuple<ErrorCode, DefaultDataDTO?>(ErrorCode.GameDB_Fail_AttendDataNotExistsByPlayerID, null);
         }
 
         // 농장 기본 정보 로드
         result.FarmInfoData = await GetFarmInfoData(result.UserData.UserId);
         if (result.FarmInfoData == null)
         {
-            return new Tuple<ErrorCode, DefaultDataDTO?>(ErrorCode.Account_Fail_FarmInfoNotExists, null);
+            return new Tuple<ErrorCode, DefaultDataDTO?>(ErrorCode.GameDB_Fail_FarmInfoNotExistsByPlayerID, null);
         }
 
         return new Tuple<ErrorCode, DefaultDataDTO?>(ErrorCode.None, result);
@@ -98,21 +98,21 @@ public partial class GameDb : IGameDb
         result.UserData = await GetUserDataByUserId(userId);
         if (result.UserData == null)
         {
-            return new Tuple<ErrorCode, DefaultDataDTO?>(ErrorCode.Account_Fail_UserInfoNotExists, null);
+            return new Tuple<ErrorCode, DefaultDataDTO?>(ErrorCode.GameDB_Fail_UserInfoNotExistsByUserID, null);
         }
 
         // 출석부 정보 로드
         result.AttendData = await GetAttendData(userId);
         if (result.AttendData == null)
         {
-            return new Tuple<ErrorCode, DefaultDataDTO?>(ErrorCode.Account_Fail_AttendDataNotExists, null);
+            return new Tuple<ErrorCode, DefaultDataDTO?>(ErrorCode.GameDB_Fail_AttendDataNotExistsByUserID, null);
         }
 
         // 농장 기본 정보 로드
         result.FarmInfoData = await GetFarmInfoData(userId);
         if (result.FarmInfoData == null)
         {
-            return new Tuple<ErrorCode, DefaultDataDTO?>(ErrorCode.Account_Fail_FarmInfoNotExists, null);
+            return new Tuple<ErrorCode, DefaultDataDTO?>(ErrorCode.GameDB_Fail_FarmInfoNotExistsByUserID, null);
         }
 
         return new Tuple<ErrorCode, DefaultDataDTO?>(ErrorCode.None, result);
@@ -134,7 +134,7 @@ public partial class GameDb : IGameDb
 
         if (result < 1)
         {
-            var errorCode = ErrorCode.Account_Fail_UpdateLastLogin;
+            var errorCode = ErrorCode.GameDB_Fail_UpdateLastLogin;
 
             _logger.ZLogDebugWithPayload(EventIdGenerator.Create(errorCode),
                                          new { UserID = userId }, "Failed");
@@ -158,7 +158,7 @@ public partial class GameDb : IGameDb
         }
         catch (Exception ex)
         {
-            var errorCode = ErrorCode.Account_Fail_DuplicateNickname;
+            var errorCode = ErrorCode.GameDB_Fail_InsertedDuplicatedNickname;
 
             _logger.ZLogDebugWithPayload(EventIdGenerator.Create(errorCode), ex,
                                          new { PlayerID = playerId, Nickname = "nickname" }, "Failed");
@@ -180,7 +180,7 @@ public partial class GameDb : IGameDb
         }
         catch (Exception ex)
         {
-            var errorCode = ErrorCode.Account_Fail_CreateDefaultAttendanceData;
+            var errorCode = ErrorCode.GameDB_Fail_CreateDefaultAttendData;
 
             await Rollback(errorCode, rollbackQuerys);
 
@@ -210,7 +210,7 @@ public partial class GameDb : IGameDb
         }
         catch (Exception ex)
         {
-            var errorCode = ErrorCode.Account_Fail_CreateDefaultFarmData;
+            var errorCode = ErrorCode.GameDB_Fail_CreateDefaultFarmData;
 
             await Rollback(errorCode, rollbackQuerys);
 
@@ -248,7 +248,7 @@ public partial class GameDb : IGameDb
         }
         catch (Exception ex)
         {
-            var errorCode = ErrorCode.Account_Fail_InsertDefaultItem;
+            var errorCode = ErrorCode.GameDB_Fail_InsertDefaultItem;
 
             await Rollback(errorCode, rollbackQuerys);
 
