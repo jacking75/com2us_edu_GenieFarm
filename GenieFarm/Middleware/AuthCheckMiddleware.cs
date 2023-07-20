@@ -61,6 +61,9 @@ public class AuthCheckMiddleware
     {
         if (!await _redisDb.AcquireRequest(authToken, path))
         {
+            _logger.ZLogDebugWithPayload(EventIdGenerator.Create(ErrorCode.AuthCheck_Fail_RequestOverlapped),
+                                         new { AuthToken = authToken, Path = path }, "Failed");
+
             return true;
         }
 
@@ -76,6 +79,9 @@ public class AuthCheckMiddleware
 
         if (!await _redisDb.CompareMemoryKeyValue(userId.ToString(), authToken))
         {
+            _logger.ZLogDebugWithPayload(EventIdGenerator.Create(ErrorCode.AuthCheck_Fail_TokenNotMatch),
+                                         new { UserID = userId, AuthToken = authToken }, "Failed");
+
             return false;
         }
 
