@@ -2,23 +2,28 @@ public enum ErrorCode : UInt16
 {
     None = 0,
 
-    MasterDB_Fail_LoadData = 1,
-    
-    Hive_Fail_InvalidResponse = 10,
-    Hive_Fail_AuthCheck = 11,
-    Hive_Fail_AuthCheckOnLogin = 12,
-    Hive_Fail_AuthCheckException = 13,
-    
-    Redis_Fail_SetToken = 20,
+    MasterDB_Fail_LoadData = 10,
 
-    Account_Fail_CreateDefaultAttendanceData = 30,
-    Account_Fail_CreateDefaultFarmData = 31,
-    Account_Fail_InsertDefaultItem = 32,
-    Account_Fail_UserNotExists = 33,
-    Account_Fail_UserAlreadyExists = 34,
-    Account_Fail_UserInfoNotExists = 35,
-    Account_Fail_AttendDataNotExists = 36,
-    Account_Fail_FarmInfoNotExists = 37,
-    Account_Fail_DuplicateNickname = 38,
-    Account_Fail_UpdateLastLogin = 39,
+    AuthCheck_Fail_ValidatePlayerID = 20,
+    AuthCheck_Fail_ValidateUserID = 21,
+    AuthCheck_Fail_ValidateJSONFormat = 22,
+
+
+    Hive_Fail_InvalidResponse = 100,
+    Hive_Fail_AuthCheck = 101,
+    Hive_Fail_AuthCheckOnLogin = 102,
+    Hive_Fail_AuthCheckException = 103,
+    
+    Redis_Fail_SetToken = 200,
+
+    Account_Fail_CreateDefaultAttendanceData = 300,
+    Account_Fail_CreateDefaultFarmData = 301,
+    Account_Fail_InsertDefaultItem = 302,
+    Account_Fail_UserNotExists = 303,
+    Account_Fail_UserAlreadyExists = 304,
+    Account_Fail_UserInfoNotExists = 305,
+    Account_Fail_AttendDataNotExists = 306,
+    Account_Fail_FarmInfoNotExists = 307,
+    Account_Fail_DuplicateNickname = 308,
+    Account_Fail_UpdateLastLogin = 309,
 }

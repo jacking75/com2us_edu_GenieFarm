@@ -39,6 +39,18 @@ public class ResCreateDTO : ErrorCodeDTO
 
 }
 
+// DefaultData : 게임 데이터 로드
+
+public class ReqDefaultDataDTO : InGameDTO
+{
+
+}
+
+public class ResDefaultDataDTO : ErrorCodeDTO
+{
+    public DefaultDataDTO? DefaultData { get; set; }
+}
+
 
 // Logout : 로그아웃
 

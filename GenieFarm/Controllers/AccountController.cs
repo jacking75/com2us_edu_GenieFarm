@@ -82,6 +82,20 @@ public class AccountController : ControllerBase
         return new ResLoginDTO() { Result = ErrorCode.None, DefaultData = defaultData, AuthToken = token };
     }
 
+    [HttpPost("defaultData")]
+    public async Task<ResDefaultDataDTO> LoadDefaultData(ReqDefaultDataDTO request)
+    {
+        // 게임 데이터 로드
+        (var defaultDataResult, var defaultData) = await _gameDb.GetDefaultDataByUserId(request.UserID);
+        if (defaultDataResult != ErrorCode.None)
+        {
+            return new ResDefaultDataDTO() { Result = defaultDataResult };
+        }
+
+        LogResult(ErrorCode.None, "LoadDefaultData", request.UserID, request.AuthToken);
+        return new ResDefaultDataDTO() { Result = ErrorCode.None, DefaultData = defaultData };
+    }
+
     void LogResult(ErrorCode errorCode, string method, string playerId, string authToken)
     {
         if (errorCode != ErrorCode.None)
@@ -92,6 +106,20 @@ public class AccountController : ControllerBase
         {
             _logger.ZLogInformationWithPayload(EventIdGenerator.Create(0, method),
                                                new { PlayerID = playerId, AuthToken = authToken }, "Statistic");
+        }
+    }
+
+    void LogResult(ErrorCode errorCode, string method, Int64 userId, string authToken)
+    {
+        if (errorCode != ErrorCode.None)
+        {
+            _logger.ZLogDebugWithPayload(EventIdGenerator.Create((UInt16)errorCode, method),
+                                         new { UserID = userId, AuthToken = authToken }, "Failed");
+        }
+        else
+        {
+            _logger.ZLogInformationWithPayload(EventIdGenerator.Create(0, method),
+                                               new { UserID = userId, AuthToken = authToken }, "Statistic");
         }
     }
 
