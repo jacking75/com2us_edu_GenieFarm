@@ -18,12 +18,6 @@ builder.Logging.AddZLoggerConsole(options =>
     options.EnableStructuredLogging = true;
 });
 
-//builder.Logging.AddZLoggerRollingFile((dt, x) => $"../logs/{dt.ToLocalTime():yyyy-MM-dd}_{x:000}.log", x => x.ToLocalTime().Date, 1024, options =>
-//{
-//    options.EnableStructuredLogging = true;
-//    options.PrefixFormatter = (writer, info) => ZString.Utf8Format(writer, "[{0}]", info.Timestamp.ToLocalTime().DateTime);
-//});
-
 var app = builder.Build();
 
 if (!await app.Services.GetService<IMasterDb>()!.Init())
@@ -31,6 +25,11 @@ if (!await app.Services.GetService<IMasterDb>()!.Init())
     return;
 }
 
+// JSON 포맷 검사, 필요한 Request Field가 있는지 검사 후 Request Header에 붙여줌
+app.UseJsonFieldCheckMiddleware();
+// 버전 유효성 체크
+app.UseVersionCheckMiddleware();
+// Token 유효성 체크, Create와 Login API에만 동작한다.
 app.UseAuthCheckMiddleware();
 app.UseRouting();
 app.MapControllers();
