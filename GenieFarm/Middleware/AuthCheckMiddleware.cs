@@ -119,13 +119,7 @@ public class AuthCheckMiddleware
             return false;
         }
 
-        var memoryToken = await _redisDb.GetAsync(userId.ToString());
-        if (memoryToken == null)
-        {
-            return false;
-        }
-
-        if (!authToken.Equals(memoryToken))
+        if (!await _redisDb.CompareMemoryKeyValue(userId.ToString(), authToken))
         {
             return false;
         }

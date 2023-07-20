@@ -17,6 +17,7 @@ public enum ErrorCode : UInt16
     Hive_Fail_AuthCheckException = 103,
     
     Redis_Fail_SetToken = 200,
+    Redis_Fail_DeleteToken = 201,
 
     Account_Fail_CreateDefaultAttendanceData = 300,
     Account_Fail_CreateDefaultFarmData = 301,

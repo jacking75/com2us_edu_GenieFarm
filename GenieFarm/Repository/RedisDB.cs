@@ -42,33 +42,6 @@ public class RedisDb : IRedisDb
         return await query.DeleteAsync();
     }
 
-    public async Task<bool> DeleteSessionDataAsync(string authId, string authToken, Int64 userId)
-    {
-        // authId의 토큰이 authToken과 일치하는지 확인
-        if (!await CompareMemoryKeyValue(authId, authToken))
-        {
-            return false;
-        }
-        
-        // authToken의 유저ID가 일치하는지 확인
-        if (!await CompareMemoryKeyValue(authToken, userId))
-        {
-            return false;
-        }
-
-        // 인증ID와 인증 토큰 삭제
-        if (!await DeleteAsync(authId))
-        {
-            return false;
-        }
-        if (!await DeleteAsync(authToken))
-        {
-            return false;
-        }
-
-        return true;
-    }
-
     public async Task<bool> AcquireRequest(string authToken, string path)
     {
         StringBuilder sb = new StringBuilder(authToken).Append(path);
@@ -90,20 +63,6 @@ public class RedisDb : IRedisDb
         string? memoryValue = (await query.GetAsync()).GetValueOrDefault();
 
         if (memoryValue == null || !memoryValue.Equals(value))
-        {
-            return false;
-        }
-
-        return true;
-    }
-
-    public async Task<bool> CompareMemoryKeyValue(string key, Int64 value)
-    {
-        // key에 해당하는 value가 메모리에 있는 것과 동일한지 비교
-        var query = new RedisString<Int64>(_redisConn, key, null);
-        Int64 memoryValue = (await query.GetAsync()).GetValueOrDefault();
-
-        if (memoryValue == 0 || memoryValue != value)
         {
             return false;
         }

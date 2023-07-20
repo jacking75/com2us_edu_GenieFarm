@@ -65,4 +65,17 @@ public partial class AuthCheckController : ControllerBase
         LogResult(ErrorCode.None, "Login", request.PlayerID, request.AuthToken);
         return new ResLoginDTO() { Result = ErrorCode.None, DefaultData = defaultData, AuthToken = token };
     }
+
+    [HttpPost("logout")]
+    public async Task<ResLogoutDTO> Logout(ReqLogoutDTO request)
+    {
+        // Redis에서 토큰 삭제
+        if (false == await _redisDb.DeleteAsync(request.UserID.ToString()))
+        {
+            return new ResLogoutDTO() { Result = ErrorCode.Redis_Fail_DeleteToken };
+        }
+
+        LogResult(ErrorCode.None, "Logout", request.UserID, request.AuthToken);
+        return new ResLogoutDTO() { Result = ErrorCode.None };
+    }
 }

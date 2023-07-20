@@ -19,6 +19,20 @@ public partial class AuthCheckController : ControllerBase
         _hiveServerUrl = configuration.GetSection("HiveServer")["Address"]! + "/authcheck";
     }
 
+    void LogResult(ErrorCode errorCode, string method, Int64 userId, string authToken)
+    {
+        if (errorCode != ErrorCode.None)
+        {
+            _logger.ZLogDebugWithPayload(EventIdGenerator.Create((UInt16)errorCode, method),
+                                         new { UserID = userId, AuthToken = authToken }, "Failed");
+        }
+        else
+        {
+            _logger.ZLogInformationWithPayload(EventIdGenerator.Create(0, method),
+                                               new { UserID = userId, AuthToken = authToken }, "Statistic");
+        }
+    }
+
     void LogResult(ErrorCode errorCode, string method, string playerId, string authToken)
     {
         if (errorCode != ErrorCode.None)
