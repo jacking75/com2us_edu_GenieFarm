@@ -8,5 +8,4 @@ public class ReqAttendDTO : InGameDTO
 public class ResAttendDTO : ErrorCodeDTO
 {
     public Int16 AttendanceCount { get; set; }
-    // TODO : public ItemData Reward { get; set; }
 }

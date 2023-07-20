@@ -7,9 +7,9 @@ public enum ErrorCode : UInt16
     AuthCheck_Fail_ValidatePlayerID = 20,
     AuthCheck_Fail_ValidateUserID = 21,
     AuthCheck_Fail_ValidateJSONFormat = 22,
-    AuthCheck_Fail_GetTokenString = 23,
-    AuthCheck_Fail_GetVersionString = 24,
-
+    AuthCheck_Fail_GetRequiredField = 23,
+    AuthCheck_Fail_GetTokenString = 24,
+    AuthCheck_Fail_GetVersionString = 25,
 
     Hive_Fail_InvalidResponse = 100,
     Hive_Fail_AuthCheck = 101,

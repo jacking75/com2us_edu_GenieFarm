@@ -32,8 +32,6 @@
 //                // 출석 실패
 //                return new ResAttendDTO() { Result = ErrorCode.AttendException };
 //            }
-
-//            // TODO : 출석 보상 지급
 //            return new ResAttendDTO() { Result = ErrorCode.None, AttendanceCount = (Int16)(lastAttendData.AttendanceCount + 1) };
 //        }
 //        else
