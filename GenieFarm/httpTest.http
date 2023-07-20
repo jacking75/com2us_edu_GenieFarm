@@ -1,4 +1,5 @@
-POST http://localhost:11500/api/account/login
+### 계정 생성 (클라이언트 최초 접속)
+POST http://localhost:11500/api/auth/create
 Content-Type: application/json
 
 {
@@ -8,8 +9,8 @@ Content-Type: application/json
     "MasterDataVersion" : "0.1"
 }
 
-###
-POST http://localhost:11500/api/account/create
+### 로그인
+POST http://localhost:11500/api/auth/login
 Content-Type: application/json
 
 {
@@ -19,13 +20,24 @@ Content-Type: application/json
     "MasterDataVersion" : "0.1"
 }
 
-###
-POST http://localhost:11500/api/account/defaultdata
+### 게임 기본 데이터 로드
+POST http://localhost:11500/api/load/defaultdata
 Content-Type: application/json
 
 {
     "UserID" : 96,
     "AuthToken" : "ficn87n56x09pxf1bihv3voo3",
+    "AppVersion" : "0.1",
+    "MasterDataVersion" : "0.1"
+}
+
+### 로그아웃
+POST http://localhost:11500/api/auth/logout
+Content-Type: application/json
+
+{
+    "UserID" : 97,
+    "AuthToken" : "qod72ydn5zl7u8cydxy0fc7wl",
     "AppVersion" : "0.1",
     "MasterDataVersion" : "0.1"
 }
