@@ -85,7 +85,6 @@ CREATE TABLE IF NOT EXISTS `farm_db`.`user_attendance` (
   `UserId` BIGINT NOT NULL,
   `AttendanceCount` TINYINT NOT NULL DEFAULT '0', /* 누적 출석 수 */
   `LastAttendance` DATETIME NULL DEFAULT NULL, /* 최종 출석일 */
-  `PurchasedPass` TINYINT NOT NULL DEFAULT '0', /* 월간 구독제를 구매했는지 여부 */
   `PassEndDate` DATETIME NULL DEFAULT NULL, /* 월간 구독제의 종료일자 */
   PRIMARY KEY (`UserId`))
 ENGINE = InnoDB
