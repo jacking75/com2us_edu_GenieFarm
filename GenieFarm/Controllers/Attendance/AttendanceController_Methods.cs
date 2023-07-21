@@ -4,6 +4,7 @@ public partial class AttendanceController
 {
     ErrorCode ValidateAttend(AttendanceModel attendData)
     {
+        // TODO : 함수화하기
         // 마지막 출석날짜의 연월이 다른 경우
         if (attendData.LastAttendance.Year != DateTime.Now.Year
             && attendData.LastAttendance.Month != DateTime.Now.Month)
@@ -11,6 +12,7 @@ public partial class AttendanceController
             return ErrorCode.None;
         }
 
+        // TODO : 27 상수 수정, if문 안쪽 함수화해서 최대 일수를 넘어가지 않는다는 의도를 명시하기
         // 누적 출석일이 28일 미만인지
         if (attendData.AttendanceCount > 27)
         {
@@ -25,6 +27,8 @@ public partial class AttendanceController
 
         return ErrorCode.None;
     }
+
+
 
     bool IsAnotherDay(DateTime lastAttendDate)
     {

@@ -18,6 +18,8 @@ public partial class GameDb : IGameDb
         return new Tuple<ErrorCode, AttendanceModel?>(ErrorCode.None, result);
     }
 
+
+    // TODO : DB에서 비즈니스 로직 제거하기
     public async Task<ErrorCode> Attend(Int64 userId, AttendanceModel attendData)
     {
         var rollbackQuerys = new List<SqlKata.Query>();
@@ -76,6 +78,7 @@ public partial class GameDb : IGameDb
         }
     }
 
+    // TODO : 코멘트로 부가설명 추가하기
     Int32 CalcAttendanceCount(AttendanceModel attendData)
     {
         // 연월이 같다면 누적

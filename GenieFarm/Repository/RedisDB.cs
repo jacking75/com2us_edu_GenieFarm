@@ -44,7 +44,9 @@ public class RedisDb : IRedisDb
 
     public async Task<bool> AcquireRequest(string authToken, string path)
     {
+        // TODO : Key 만드는 클래스도 따로 두는 것이 좋다. static으로 구현
         StringBuilder sb = new StringBuilder(authToken).Append(path);
+        // TODO : 상수 제거
         var query = new RedisString<string>(_redisConn, sb.ToString(), TimeSpan.FromSeconds(5));
         return await query.SetAsync("", null, StackExchange.Redis.When.NotExists);
     }

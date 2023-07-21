@@ -81,6 +81,7 @@ public partial class AuthCheckController : ControllerBase
 
     async Task<ErrorCode> SetTokenOnRedis(Int64 userId, string sessionToken)
     {
+        // TODO : 레디스 토큰 유효시간 상수값 제거
         // 같은 키의 토큰이 있어도 무조건 Overwrite하여 기존 토큰을 무효화
         if (!await _redisDb.SetAsync(userId, sessionToken, TimeSpan.FromHours(10)))
         {

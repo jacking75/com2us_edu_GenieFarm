@@ -32,6 +32,8 @@ public class AuthCheckMiddleware
         }
 
         // 중복 요청 검사
+        // TODO : 클라이언트는 한 번에 하나의 요청만 하도록 (Path구분 X)
+        // TODO : lock_{userId} .. 같은 식으로 prefix 주는 방식으로
         var path = context.Request.Path.Value;
         if (await CheckOverlappedRequest(authToken, path!))
         {
