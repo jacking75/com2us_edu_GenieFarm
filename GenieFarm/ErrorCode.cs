@@ -36,6 +36,12 @@ public enum ErrorCode : UInt16
     GameDB_Fail_CreateDefaultAttendData = 1009,
     GameDB_Fail_UpdateLastLogin = 1010,
     GameDB_Fail_InsertDefaultItem = 1011,
+    GameDB_Fail_UpdatedAttendanceRowOutOfRange = 1012,
+    GameDB_Fail_UpdateAttendDataException = 1013,
+    GameDB_Fail_SendRewardIntoMailbox = 1014,
+    GameDB_Fail_SendRewardException = 1015,
+    GameDB_Fail_SendMailAttendRewardException = 1016,
+    GameDB_Fail_CreateAttendRewardItem = 1017,
 
     // API
     /* AuthCheckToHive */
@@ -51,5 +57,9 @@ public enum ErrorCode : UInt16
     Login_Fail_TokenSetting = 3006,
     Logout_Fail_DeleteToken = 3007,
 
-
+    /* AttendController */
+    Attend_Fail_GetAttendData = 3008,
+    Attend_Fail_AlreadyAttended = 3009,
+    Attend_Fail_ReceivedAllMonthlyRewards = 3010,
+    Attend_Fail_AttendException = 3011,
 }

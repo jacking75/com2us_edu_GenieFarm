@@ -29,4 +29,6 @@ public class MailModel
     public Int64 ItemId { get; set; }
 
     public bool IsReceived { get; set; }
+
+    public Int64 Gold { get; set; }
 }
