@@ -191,13 +191,13 @@ public partial class GameDb : IGameDb
         try
         {
             // 우편 전송
-            var mailId = await _queryFactory.Query("mail_info").InsertAsync(new MailModel {
-                                                                                SenderId = 0, ReceiverId = userId,
-                                                                                Title = $"출석 보상 지급",
-                                                                                Content = $"{attendanceCount}일차 출석 보상입니다.",
-                                                                                IsRead = false, IsDeleted = false,
-                                                                                ExpiredAt = DateTime.Now.AddDays(7),
-                                                                                IsReceived = false, ItemId = itemId, Gold = money });
+            var mailId = await _queryFactory.Query("mail_info")
+                                            .InsertAsync(new MailModel { SenderId = 0, ReceiverId = userId,
+                                                                         Title = $"출석 보상 지급",
+                                                                         Content = $"{attendanceCount}일차 출석 보상입니다.",
+                                                                         IsRead = false, IsDeleted = false,
+                                                                         ExpiredAt = DateTime.Now.AddDays(7),
+                                                                         IsReceived = false, ItemId = itemId, Gold = money });
 
             if (mailId == 0)
             {
@@ -218,6 +218,5 @@ public partial class GameDb : IGameDb
 
             return false;
         }
-
     }
 }
