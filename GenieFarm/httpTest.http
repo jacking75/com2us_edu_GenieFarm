@@ -41,3 +41,14 @@ Content-Type: application/json
     "AppVersion" : "0.1",
     "MasterDataVersion" : "0.1"
 }
+
+### 출석 체크
+POST http://localhost:11500/api/attend
+Content-Type: application/json
+
+{
+    "UserID" : 99,
+    "AuthToken" : "8fzg1yu71r8g3u77mbe4rj7tv",
+    "AppVersion" : "0.1",
+    "MasterDataVersion" : "0.1"
+}
