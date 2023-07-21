@@ -152,7 +152,7 @@ public partial class GameDb : IGameDb
             var userId = await _queryFactory.Query("user_basicinfo")
                                             .InsertGetIdAsync<Int64>(new { PlayerId = playerId, Nickname = nickname });
 
-            rollbackQuerys.Add(_queryFactory.Query("user_basicinfo").Where("UserId", userId));
+            rollbackQuerys.Add(_queryFactory.Query("user_basicinfo").Where("UserId", userId).AsDelete());
 
             return new Tuple<ErrorCode, Int64>(ErrorCode.None, userId);
         }
@@ -174,7 +174,7 @@ public partial class GameDb : IGameDb
             var attendanceInsert = await _queryFactory.Query("user_attendance")
                                                       .InsertAsync(new { UserId = userId, AttendanceCount = 0 });
 
-            rollbackQuerys.Add(_queryFactory.Query("user_attendance").Where("UserId", userId));
+            rollbackQuerys.Add(_queryFactory.Query("user_attendance").Where("UserId", userId).AsDelete());
 
             return ErrorCode.None;
         }
@@ -204,7 +204,7 @@ public partial class GameDb : IGameDb
                                                   Love = defaultData.DefaultLove,
                                                   Money = defaultData.DefaultMoney });
 
-            rollbackQuerys.Add(_queryFactory.Query("farm_info").Where("UserId", userId));
+            rollbackQuerys.Add(_queryFactory.Query("farm_info").Where("UserId", userId).AsDelete());
 
             return ErrorCode.None;
         }
@@ -225,7 +225,7 @@ public partial class GameDb : IGameDb
     {
         try
         {
-            rollbackQuerys.Add(_queryFactory.Query("farm_item").Where("OwnerId", userId));
+            rollbackQuerys.Add(_queryFactory.Query("farm_item").Where("OwnerId", userId).AsDelete());
 
             // 마스터 DB의 Default 아이템 데이터를 가져와 Insert
             var affectedRow = 0;
@@ -263,7 +263,7 @@ public partial class GameDb : IGameDb
     {
         foreach (var query in rollbackQuerys)
         {
-            var affectedRowCount = await query.DeleteAsync();
+            var affectedRowCount = await _queryFactory.ExecuteAsync(query);
 
             _logger.ZLogDebugWithPayload(EventIdGenerator.Create(errorCode),
                                          new { Query = _queryFactory.Compiler.Compile(query).RawSql,
