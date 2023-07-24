@@ -5,11 +5,11 @@ public enum ErrorCode : UInt16
     // Middlewares
     /* JsonFieldCheckMiddleware */
     JsonFieldCheck_Fail_GetPlayerID = 20,
-    JsonFieldCheck_Fail_GetUserID = 21,
-    JsonFieldCheck_Fail_ValidateJSONFormat = 22,
-    JsonFieldCheck_Fail_GetRequiredField = 23,
-    JsonFieldCheck_Fail_GetTokenString = 24,
-    JsonFieldCheck_Fail_GetVersionString = 25,
+    JsonFieldCheck_Fail_GetUserID,
+    JsonFieldCheck_Fail_ValidateJSONFormat,
+    JsonFieldCheck_Fail_GetRequiredField,
+    JsonFieldCheck_Fail_GetTokenString,
+    JsonFieldCheck_Fail_GetVersionString,
 
     /* AuthCheckMiddleware */
     AuthCheck_Fail_TokenNotMatch = 30,
@@ -17,49 +17,100 @@ public enum ErrorCode : UInt16
 
     // MasterDB
     MasterDB_Fail_LoadData = 100,
-    MasterDB_Fail_InvalidData = 101,
+    MasterDB_Fail_InvalidData,
 
     // Redis
     Redis_Fail_SetToken = 200,
-    Redis_Fail_DeleteToken = 201,
+    Redis_Fail_DeleteToken,
 
     // GameDB
     GameDB_Fail_CreateDefaultData = 1000,
-    GameDB_Fail_CreateDefaultFarmData = 1001,
-    GameDB_Fail_UserInfoNotExistsByPlayerID = 1002,
-    GameDB_Fail_AttendDataNotExistsByPlayerID = 1003,
-    GameDB_Fail_FarmInfoNotExistsByPlayerID = 1004,
-    GameDB_Fail_UserInfoNotExistsByUserID = 1005,
-    GameDB_Fail_AttendDataNotExistsByUserID = 1006,
-    GameDB_Fail_FarmInfoNotExistsByUserID = 1007,
-    GameDB_Fail_InsertedDuplicatedNickname = 1008,
-    GameDB_Fail_CreateDefaultAttendData = 1009,
-    GameDB_Fail_UpdateLastLogin = 1010,
-    GameDB_Fail_InsertDefaultItem = 1011,
-    GameDB_Fail_UpdatedAttendanceRowOutOfRange = 1012,
-    GameDB_Fail_UpdateAttendDataException = 1013,
-    GameDB_Fail_SendRewardIntoMailbox = 1014,
-    GameDB_Fail_SendRewardException = 1015,
-    GameDB_Fail_SendMailAttendRewardException = 1016,
-    GameDB_Fail_CreateAttendRewardItem = 1017,
+    GameDB_Fail_CreateDefaultFarmData,
+    GameDB_Fail_UserInfoNotExistsByPlayerID,
+    GameDB_Fail_AttendDataNotExistsByPlayerID,
+    GameDB_Fail_FarmInfoNotExistsByPlayerID,
+    GameDB_Fail_UserInfoNotExistsByUserID,
+    GameDB_Fail_AttendDataNotExistsByUserID,
+    GameDB_Fail_FarmInfoNotExistsByUserID,
+    GameDB_Fail_InsertedDuplicatedNickname,
+    GameDB_Fail_CreateDefaultAttendData,
+    GameDB_Fail_UpdateLastLogin,
+    GameDB_Fail_InsertDefaultItem,
+    GameDB_Fail_UpdatedAttendanceRowOutOfRange,
+    GameDB_Fail_UpdateAttendDataException,
+    GameDB_Fail_SendRewardIntoMailbox,
+    GameDB_Fail_SendRewardException,
+    GameDB_Fail_SendMailAttendRewardException,
+    GameDB_Fail_CreateAttendRewardItem,
+
+    /* AuthCheckService */
+    AuthCheckService_GetUserId_UserNotExists = 2000,
+    AuthCheckService_CheckPlayerExists_NotExists,
+    AuthCheckService_CreateDefaultUserData_Fail,
+    AuthCheckService_CreateDefaultGameData_DuplicatedNickname,
+    AuthCheckService_CreateDefaultGameData_AttendData,
+    AuthCheckService_CreateDefaultAttendanceData_Fail,
+    AuthCheckService_CreateDefaultGameData_FarmData,
+    AuthCheckService_CreateDefaultFarmData_Fail,
+    AuthCheckService_CreateDefaultGameData_Items,
+    AuthCheckService_CreateDefaultItems_Fail,
+    AuthCheckService_GetDefaultGameDataByPlayerId_UserData,
+    AuthCheckService_GetDefaultGameDataByUserId_UserData,
+    AuthCheckService_GetDefaultGameDataByPlayerId_AttendData,
+    AuthCheckService_GetDefaultGameDataByUserId_AttendData,
+    AuthCheckService_GetDefaultGameDataByPlayerId_FarmData,
+    AuthCheckService_GetDefaultGameDataByUserId_FarmData,
+    AuthCheckService_UpdateLastLoginAt_Fail,
+    AuthCheckService_CreateDefaultAttendanceData_AffectedRowOutOfRange,
+    AuthCheckService_CreateDefaultFarmData_AffectedRowOutOfRange,
+    AuthCheckService_CreateDefaultItems_AffectedRowOutOfRange,
+    AuthCheckService_UpdateLastLoginAt_AffectedRowOutOfRange,
+
+
+    /* AttendanceService */
+    AttendanceService_GetAttendanceData,
+    AttendanceService_UpdateAttendanceData_AffectedRowOutOfRange,
+    AttendanceService_UpdateAttendanceData_Fail,
+    AttendanceService_UpdateAttendanceData,
+    AttendanceService_SendAttendanceReward,
+    AttendanceService_SendAttendanceReward_CreateItem,
+    AttendanceService_SendAttendanceReward_SendRewardIntoMail,
+    AttendanceService_CreateItem_Fail,
+    AttendanceService_SendRewardIntoMail,
+    AttendanceService_SendRewardIntoMail_InsertedRowOutOfRange,
+    AttendanceService_SendRewardIntoMail_Fail,
+
+
+    /* LoadDataService */
+    LoadDataService_GetDefaultGameDataByUserId_UserData,
+    LoadDataService_GetDefaultGameDataByUserId_AttendData,
+    LoadDataService_GetDefaultGameDataByUserId_FarmData,
+    LoadDataService_GetAttendanceDataByUserId,
+
 
     // API
     /* AuthCheckToHive */
     Hive_Fail_InvalidResponse = 3000,
-    Hive_Fail_AuthCheck = 3001,
-    Hive_Fail_AuthCheckOnLogin = 3002,
-    Hive_Fail_AuthCheckException = 3003,
+    Hive_Fail_AuthCheck,
+    Hive_Fail_AuthCheckOnLogin,
+    Hive_Fail_AuthCheckException,
     
     /* AuthCheckController */
-    Create_Fail_UserAlreadyExists = 3004,
-    Login_Fail_HiveAuthCheck = 3005,
-    Login_Fail_UpdateLastLogin = 3005,
-    Login_Fail_TokenSetting = 3006,
-    Logout_Fail_DeleteToken = 3007,
+    Create_Fail_UserAlreadyExists,
+    Create_Fail_CreateDefaultDataFailed,
+    Login_Fail_HiveAuthCheck,
+    Login_Fail_UpdateLastLogin,
+    Login_Fail_TokenSetting,
+    Login_Fail_UserDataNotExists,
+    Logout_Fail_DeleteToken,
 
     /* AttendController */
-    Attend_Fail_GetAttendData = 3008,
-    Attend_Fail_AlreadyAttended = 3009,
-    Attend_Fail_ReceivedAllMonthlyRewards = 3010,
-    Attend_Fail_AttendException = 3011,
+    Attend_Fail_GetAttendData,
+    Attend_Fail_AlreadyAttended,
+    Attend_Fail_ReceivedAllMonthlyRewards,
+    Attend_Fail_AttendException,
+
+    /* LoadDataController */
+    LoadDefaultData_Fail,
+    LoadAttendData_Fail,
 }

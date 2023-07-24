@@ -3,17 +3,21 @@ using ZLogger;
 
 public partial class LoadDataController : ControllerBase
 {
-    void LogResult(ErrorCode errorCode, string method, Int64 userId, string authToken)
+    bool SuccessOrLogDebug<TPayload>(ErrorCode errorCode, TPayload payload)
     {
-        if (errorCode != ErrorCode.None)
+        if (errorCode == ErrorCode.None)
         {
-            _logger.ZLogDebugWithPayload(EventIdGenerator.Create((UInt16)errorCode, method),
-                                         new { UserID = userId, AuthToken = authToken }, "Failed");
+            return true;
         }
         else
         {
-            _logger.ZLogInformationWithPayload(EventIdGenerator.Create(0, method),
-                                               new { UserID = userId, AuthToken = authToken }, "Statistic");
+            _logger.ZLogDebugWithPayload(EventIdGenerator.Create(errorCode), payload, "Failed");
+            return false;
         }
+    }
+
+    void LogInfoOnSuccess<TPayload>(string method, TPayload payload)
+    {
+        _logger.ZLogInformationWithPayload(EventIdGenerator.Create(0, method), payload, "Statistic");
     }
 }

@@ -2,33 +2,16 @@
 
 public partial class AttendanceController
 {
-    ErrorCode ValidateAttend(AttendanceModel attendData)
+    bool ValidateAttend(AttendanceModel attendData)
     {
-        // TODO : 함수화하기
-        // 마지막 출석날짜의 연월이 다른 경우
-        if (attendData.LastAttendance.Year != DateTime.Now.Year
-            && attendData.LastAttendance.Month != DateTime.Now.Month)
-        {
-            return ErrorCode.None;
-        }
-
-        // TODO : 27 상수 수정, if문 안쪽 함수화해서 최대 일수를 넘어가지 않는다는 의도를 명시하기
-        // 누적 출석일이 28일 미만인지
-        if (attendData.AttendanceCount > 27)
-        {
-            return ErrorCode.Attend_Fail_ReceivedAllMonthlyRewards;
-        }
-
         // 오늘 이미 출석했는지 체크
         if (!IsAnotherDay(attendData.LastAttendance))
         {
-            return ErrorCode.Attend_Fail_AlreadyAttended;
+            return false;
         }
 
-        return ErrorCode.None;
+        return true;
     }
-
-
 
     bool IsAnotherDay(DateTime lastAttendDate)
     {
@@ -40,17 +23,21 @@ public partial class AttendanceController
         return diff > TimeSpan.FromDays(0);
     }
 
-    void LogResult(ErrorCode errorCode, string method, Int64 userId, string authToken)
+    void LogInfoOnSuccess<TPayload>(string method, TPayload payload)
     {
-        if (errorCode != ErrorCode.None)
+        _logger.ZLogInformationWithPayload(EventIdGenerator.Create(0, method), payload, "Statistic");
+    }
+
+    bool SuccessOrLogDebug<TPayload>(ErrorCode errorCode, TPayload payload)
+    {
+        if (errorCode == ErrorCode.None)
         {
-            _logger.ZLogDebugWithPayload(EventIdGenerator.Create((UInt16)errorCode, method),
-                                         new { UserID = userId, AuthToken = authToken }, "Failed");
+            return true;
         }
         else
         {
-            _logger.ZLogInformationWithPayload(EventIdGenerator.Create(0, method),
-                                               new { UserID = userId, AuthToken = authToken }, "Statistic");
+            _logger.ZLogDebugWithPayload(EventIdGenerator.Create(errorCode), payload, "Failed");
+            return false;
         }
     }
 }

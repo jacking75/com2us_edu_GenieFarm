@@ -5,32 +5,9 @@ using ZLogger;
 
 public partial class AuthCheckController : ControllerBase
 {
-    void LogResult(ErrorCode errorCode, string method, Int64 userId, string authToken)
+    void LogInfoOnSuccess<TPayload>(string method, TPayload payload)
     {
-        if (errorCode != ErrorCode.None)
-        {
-            _logger.ZLogDebugWithPayload(EventIdGenerator.Create((UInt16)errorCode, method),
-                                         new { UserID = userId, AuthToken = authToken }, "Failed");
-        }
-        else
-        {
-            _logger.ZLogInformationWithPayload(EventIdGenerator.Create(0, method),
-                                               new { UserID = userId, AuthToken = authToken }, "Statistic");
-        }
-    }
-
-    void LogResult(ErrorCode errorCode, string method, string playerId, string authToken)
-    {
-        if (errorCode != ErrorCode.None)
-        {
-            _logger.ZLogDebugWithPayload(EventIdGenerator.Create((UInt16)errorCode, method),
-                                         new { PlayerID = playerId, AuthToken = authToken }, "Failed");
-        }
-        else
-        {
-            _logger.ZLogInformationWithPayload(EventIdGenerator.Create(0, method),
-                                               new { PlayerID = playerId, AuthToken = authToken }, "Statistic");
-        }
+        _logger.ZLogInformationWithPayload(EventIdGenerator.Create(0, method), payload, "Statistic");
     }
 
     async Task<bool> AuthCheckToHive(string playerID, string authToken)
@@ -79,21 +56,17 @@ public partial class AuthCheckController : ControllerBase
         }
     }
 
-    async Task<ErrorCode> SetTokenOnRedis(Int64 userId, string sessionToken)
+    bool SuccessOrLogDebug<TPayload>(ErrorCode errorCode, TPayload payload)
     {
-        // TODO : 레디스 토큰 유효시간 상수값 제거
-        // 같은 키의 토큰이 있어도 무조건 Overwrite하여 기존 토큰을 무효화
-        if (!await _redisDb.SetAsync(userId, sessionToken, TimeSpan.FromHours(10)))
+        if (errorCode == ErrorCode.None)
         {
-            var errorCode = ErrorCode.Redis_Fail_SetToken;
-
-            _logger.ZLogDebugWithPayload(EventIdGenerator.Create(errorCode),
-                                         new { UserID = userId, AuthToken = sessionToken }, "Failed");
-
-            return errorCode;
+            return true;
         }
-
-        return ErrorCode.None;
+        else
+        {
+            _logger.ZLogDebugWithPayload(EventIdGenerator.Create(errorCode), payload, "Failed");
+            return false;
+        }
     }
 
     public class Security

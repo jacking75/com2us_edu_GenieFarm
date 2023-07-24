@@ -12,15 +12,17 @@ using ZLogger;
 public partial class AuthCheckController : ControllerBase
 {
     ILogger<AuthCheckController> _logger;
+    IAuthCheckService _authCheckService;
     IGameDb _gameDb;
     IRedisDb _redisDb;
     string _hiveServerUrl;
 
-    public AuthCheckController(ILogger<AuthCheckController> logger, IGameDb gameDb, IRedisDb redisDb, IConfiguration configuration)
+    public AuthCheckController(ILogger<AuthCheckController> logger, IGameDb gameDb, IRedisDb redisDb, IAuthCheckService authCheckService, IConfiguration configuration)
     {
         _logger = logger;
         _gameDb = gameDb;
         _redisDb = redisDb;
+        _authCheckService = authCheckService;
         _hiveServerUrl = configuration.GetSection("HiveServer")["Address"]! + "/authcheck";
     }
 
@@ -37,15 +39,19 @@ public partial class AuthCheckController : ControllerBase
         }
 
         // GameDB에 해당 PlayerID로 된 계정 데이터가 존재하는지 확인
-        if (0 != await _gameDb.GetUserIdByPlayerId(request.PlayerID))
+        if (ErrorCode.None == await _authCheckService.CheckPlayerExists(request.PlayerID))
         {
             return new ResCreateDTO() { Result = ErrorCode.Create_Fail_UserAlreadyExists };
         }
 
         // GameDB에 기본 게임 데이터 생성
-        var errorCode = await _gameDb.CreateDefaultData(request.PlayerID, request.Nickname);
+        var errorCode = await _authCheckService.CreateDefaultGameData(request.PlayerID, request.Nickname);
+        if (!SuccessOrLogDebug(errorCode, new { PlayerID = request.PlayerID, Nickname = request.Nickname }))
+        {
+            return new ResCreateDTO() { Result = ErrorCode.Create_Fail_CreateDefaultDataFailed };
+        }
 
-        LogResult(errorCode, "Create", request.PlayerID, request.AuthToken);
+        LogInfoOnSuccess("Create", new { PlayerID = request.PlayerID });
         return new ResCreateDTO() { Result = errorCode };
     }
 
@@ -62,26 +68,29 @@ public partial class AuthCheckController : ControllerBase
         }
 
         // 게임 데이터 로드
-        (var defaultDataResult, var defaultData) = await _gameDb.GetDefaultDataByPlayerId(request.PlayerID);
-        if (defaultDataResult != ErrorCode.None)
+        (var defaultDataResult, var defaultData) = await _authCheckService.GetDefaultGameData(request.PlayerID);
+        if (!SuccessOrLogDebug(defaultDataResult, new { PlayerID = request.PlayerID }))
         {
-            return new ResLoginDTO() { Result = defaultDataResult };
+            return new ResLoginDTO() { Result = ErrorCode.Login_Fail_UserDataNotExists };
         }
 
         // 최종 로그인 시각 갱신
-        if (!await _gameDb.UpdateLastLoginAt(defaultData!.UserData!.UserId))
+        var userId = defaultData!.UserData!.UserId;
+        var lastLoginUpdateResult = await _authCheckService.UpdateLastLoginAt(userId);
+        if (!SuccessOrLogDebug(lastLoginUpdateResult, new { UserID = userId }))
         {
             return new ResLoginDTO() { Result = ErrorCode.Login_Fail_UpdateLastLogin };
         }
 
         // 토큰 생성 및 Redis에 세팅
         var token = Security.CreateAuthToken();
-        if (ErrorCode.None != await SetTokenOnRedis(defaultData!.UserData!.UserId, token))
+        var setTokenResult = await _authCheckService.SetTokenOnRedis(userId, token);
+        if (!SuccessOrLogDebug(setTokenResult, new { UserID = userId, AuthToken = token }))
         {
             return new ResLoginDTO() { Result = ErrorCode.Login_Fail_TokenSetting };
         }
 
-        LogResult(ErrorCode.None, "Login", request.PlayerID, request.AuthToken);
+        LogInfoOnSuccess("Login", new { PlayerID = request.PlayerID });
         return new ResLoginDTO() { Result = ErrorCode.None, DefaultData = defaultData, AuthToken = token };
     }
 
@@ -97,7 +106,7 @@ public partial class AuthCheckController : ControllerBase
             return new ResLogoutDTO() { Result = ErrorCode.Logout_Fail_DeleteToken };
         }
 
-        LogResult(ErrorCode.None, "Logout", request.UserID, request.AuthToken);
+        LogInfoOnSuccess("Logout", new { PlayerID = request.UserID });
         return new ResLogoutDTO() { Result = ErrorCode.None };
     }
 }

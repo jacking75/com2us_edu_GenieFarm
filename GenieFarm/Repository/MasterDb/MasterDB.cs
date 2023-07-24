@@ -15,6 +15,7 @@ public class MasterDb : IMasterDb {
     public List<DefaultFarmItemModel>? _defaultFarmItemList { get; set; }
     public List<ItemAttributeModel>? _itemAttributeList { get; set; }
     public List<ItemTypeModel>? _itemTypeList { get; set; }
+    public Dictionary<string, Int32>? _definedValueDictionary { get; set; }
     public VersionModel? _version { get; set; }
 
 
@@ -41,6 +42,7 @@ public class MasterDb : IMasterDb {
             _itemAttributeList = (await _queryFactory.Query("item_attribute").GetAsync<ItemAttributeModel>()).ToList();
             _itemTypeList = (await _queryFactory.Query("item_type").GetAsync<ItemTypeModel>()).ToList();
             _version = (await _queryFactory.Query("version").GetAsync<VersionModel>()).FirstOrDefault();
+            _definedValueDictionary = (await _queryFactory.Query("num_values").GetAsync<DefinedValueModel>()).ToDictionary(x => x.Key, x => x.Value);
         }
         catch
         {
