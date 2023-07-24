@@ -32,10 +32,8 @@ public class AuthCheckMiddleware
         }
 
         // 중복 요청 검사
-        // TODO : 클라이언트는 한 번에 하나의 요청만 하도록 (Path구분 X)
-        // TODO : lock_{userId} .. 같은 식으로 prefix 주는 방식으로
         var path = context.Request.Path.Value;
-        if (await CheckOverlappedRequest(authToken, path!))
+        if (await CheckOverlappedRequest(userId))
         {
             context.Response.StatusCode = 429;
             return;
@@ -59,12 +57,12 @@ public class AuthCheckMiddleware
         return true;
     }
 
-    async Task<bool> CheckOverlappedRequest(string authToken, string path)
+    async Task<bool> CheckOverlappedRequest(string userId)
     {
-        if (!await _redisDb.AcquireRequest(authToken, path))
+        if (!await _redisDb.AcquireRequest(userId))
         {
             _logger.ZLogDebugWithPayload(EventIdGenerator.Create(ErrorCode.AuthCheck_Fail_RequestOverlapped),
-                                         new { AuthToken = authToken, Path = path }, "Failed");
+                                         new { UserID = userId }, "Failed");
 
             return true;
         }
