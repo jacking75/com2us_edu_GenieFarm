@@ -58,10 +58,10 @@ public class LoadDataController : ControllerBase
         }
 
         // 마스터DB에서 출석 보상 로드
-        var monthlyRewardList = _masterDb._attendanceRewardList;
+        var rewardList = _masterDb._attendanceRewardList;
 
         LogInfoOnSuccess("LoadAttendData", new { UserID = request.UserID });
-        return new ResAttendDataDTO() { Result = ErrorCode.None, MonthlyRewardList = monthlyRewardList, AttendData = attendData };
+        return new ResAttendDataDTO() { Result = ErrorCode.None, RewardList = rewardList, AttendData = attendData };
     }
 
     /// <summary>

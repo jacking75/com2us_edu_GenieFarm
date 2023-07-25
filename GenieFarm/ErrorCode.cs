@@ -67,6 +67,10 @@ public enum ErrorCode : UInt16
     LoadDataService_GetDefaultGameDataByUserId_FarmData,
     LoadDataService_GetAttendanceDataByUserId,
 
+    /* MailService */
+    MailService_InvalidPageNum,
+    MailService_PageNotExists,
+
 
     // API
     /* AuthCheckToHive */
@@ -93,4 +97,7 @@ public enum ErrorCode : UInt16
     /* LoadDataController */
     LoadDefaultData_Fail,
     LoadAttendData_Fail,
+
+    /* MailController */
+    LoadMailsByPage_InvalidPage,
 }

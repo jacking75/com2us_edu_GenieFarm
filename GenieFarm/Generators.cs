@@ -17,7 +17,8 @@ public static class AttendanceRewardMailGenerator
                                ReceiverId = receiverId, SenderId = senderId,
                                ExpiredAt = DateTime.Now.AddDays(expiry),
                                ItemId = itemId, Money = money,
-                               IsDeleted = false, IsRead = false, IsReceived = false };
+                               IsDeleted = false, IsRead = false, IsReceived = false,
+                               ObtainedAt = DateTime.Now };
     }
 }
 

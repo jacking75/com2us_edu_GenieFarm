@@ -20,14 +20,6 @@ public class ReqAttendDataDTO : InGameDTO
 
 public class ResAttendDataDTO : ErrorCodeDTO
 {
-    public List<AttendanceRewardModel>? MonthlyRewardList { get; set; }
+    public List<AttendanceRewardModel>? RewardList { get; set; }
     public AttendanceModel? AttendData { get; set; }
-}
-
-public class AttendRewardItemDTO
-{
-    public Int64 ItemCode { get; set; }
-    public string ItemName { get; set; } = string.Empty;
-    public Int64 ItemCount { get; set; }
-    public Int64 Money { get; set; }
 }

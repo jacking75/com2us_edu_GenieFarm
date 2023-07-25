@@ -24,4 +24,8 @@ public interface IGameDb
     public Task<Int32> UpdateAttendanceData(Int64 userId, Int32 newAttendanceCount);
     public Task<Int64> InsertGetIdNewItem(Int64 itemCode, Int16 itemCount);
     public Task<Int32> InsertAttendanceRewardMail(Int64 userId, MailModel mail);
+
+
+    // GameDb_Mail.cs
+    public Task<List<MailModel>> GetMailListByPage(Int64 userId, Int32 page);
 }

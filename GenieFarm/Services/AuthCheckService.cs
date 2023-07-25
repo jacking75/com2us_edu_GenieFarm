@@ -40,7 +40,7 @@ public class AuthCheckService : IAuthCheckService
                                                                   AuthToken = authToken });
 
             // 응답 체크
-            if (ValidateHiveResponse(hiveResponse))
+            if (!ValidateHiveResponse(hiveResponse))
             {
                 var statusCode = hiveResponse == null ? 0 : hiveResponse.StatusCode;
                 var errorCode = ErrorCode.Hive_Fail_InvalidResponse;

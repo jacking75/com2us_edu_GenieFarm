@@ -9,6 +9,7 @@ builder.Services.AddTransient<IGameDb, GameDb>();
 builder.Services.AddTransient<IAuthCheckService, AuthCheckService>();
 builder.Services.AddTransient<ILoadDataService, LoadDataService>();
 builder.Services.AddTransient<IAttendanceService, AttendanceService>();
+builder.Services.AddTransient<IMailService, MailService>();
 builder.Services.AddSingleton<IRedisDb, RedisDb>();
 builder.Services.AddSingleton<IMasterDb, MasterDb>();
 

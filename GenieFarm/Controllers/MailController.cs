@@ -1,87 +1,54 @@
-//using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
+using ZLogger;
 
-//namespace WebAPIServer.Controllers;
+namespace WebAPIServer.Controllers;
 
-//[ApiController]
-//[Route("api/[controller]")]
-//public class MailController : ControllerBase
-//{
-//    readonly ILogger<MailController> _logger;
-//    readonly IGameDb _gameDb;
+[ApiController]
+[Route("api/mail")]
+public class MailController : ControllerBase
+{
+    readonly ILogger<MailController> _logger;
+    readonly IGameDb _gameDb;
+    readonly IMailService _mailService;
 
-//    public MailController(ILogger<MailController> Logger, IGameDb GameDb)
-//    {
-//        _logger = Logger;
-//        _gameDb = GameDb;
-//    }
+    public MailController(ILogger<MailController> Logger, IGameDb GameDb, IMailService mailService)
+    {
+        _logger = Logger;
+        _gameDb = GameDb;
+        _mailService = mailService;
+    }
 
+    /// <summary>
+    /// 우편함 페이지 별 조회 API <br/>
+    /// 클라이언트가 요청한 페이지에 해당하는 우편 리스트를 반환합니다.
+    /// </summary>
+    [HttpPost("loadByPage")]
+    public async Task<ResLoadPageDTO> LoadMailListByPage(ReqLoadPageDTO request)
+    {
+        // 페이지 번호에 해당하는 우편 리스트 로드
+        (var errorCode, var mailList) = await _mailService.GetMailListByPage(request.UserID, request.Page);
+        if (!Successed(errorCode))
+        {
+            return new ResLoadPageDTO() { Result = ErrorCode.LoadMailsByPage_InvalidPage, MailList = null };
+        }
 
-//    [HttpPost("open")]
-//    public async Task<ResMailOpenDTO> Open(ReqMailOpenDTO request)
-//    {
-//        // 페이지 번호가 유효한지 확인
-//        if (request.Page < 1)
-//        {
-//            return new ResMailOpenDTO() { Result = ErrorCode.InvalidMailPage, Page = request.Page };
-//        }
+        LogInfoOnSuccess("LoadMailListByPage", new { UserID = request.UserID, Page = request.Page });
+        return new ResLoadPageDTO() { Result = ErrorCode.None, MailList = mailList };
+    }
 
-//        // 페이지 번호에 해당하는 우편 리스트 로드
-//        var mailList = await _gameDb.OpenMail(request.UserID, request.Page);
+    /// <summary>
+    /// 성공한 API 요청에 대해 통계용 로그를 남깁니다.
+    /// </summary>
+    void LogInfoOnSuccess<TPayload>(string method, TPayload payload)
+    {
+        _logger.ZLogInformationWithPayload(EventIdGenerator.Create(0, method), payload, "Statistic");
+    }
 
-//        // 우편 리스트가 비어있다면 존재하지 않는 페이지
-//        if (mailList == null || mailList.Count == 0)
-//        {
-//            return new ResMailOpenDTO() { Result = ErrorCode.MailPageNotExists, Page = request.Page };
-//        }
-
-//        return new ResMailOpenDTO() { Result = ErrorCode.None, MailList = mailList, Page = request.Page };
-//    }
-
-
-//    [HttpPost("read")]
-//    public async Task<ResMailInfoDTO> Read(ReqMailInfoDTO request)
-//    {
-//        // 단일 우편 로드
-//        var mailData = await _gameDb.GetMail(request.UserID, request.MailID);
-
-//        // 우편이 존재하지 않음
-//        if (mailData == null)
-//        {
-//            return new ResMailInfoDTO() { Result = ErrorCode.MailNotExists };
-//        }
-
-//        return new ResMailInfoDTO() { Result = ErrorCode.None, Mail = mailData };
-//    }
-
-
-//    [HttpDelete("delete")]
-//    public async Task<ResMailDeleteDTO> Delete(ReqMailDeleteDTO request)
-//    {
-//        // 우편 삭제
-//        if (!await _gameDb.DeleteMail(request.UserID, request.MailID))
-//        {
-//            return new ResMailDeleteDTO() { Result = ErrorCode.MailNotExists };
-//        }
-
-//        return new ResMailDeleteDTO() { Result = ErrorCode.None };
-//    }
-
-
-//    [HttpPost("send")]
-//    public async Task<ResMailSendDTO> Send(ReqMailSendDTO request)
-//    {
-//        var errorCode = await _gameDb.SendMail(request);
-        
-//        return new ResMailSendDTO() { Result = errorCode };
-//    }
-
-
-//    [HttpPost("receive")]
-//    public async Task<ResMailReceiveDTO> Receive(ReqMailReceiveDTO request)
-//    {
-//        // 우편 수령
-//        var errorCode = await _gameDb.ReceiveMail(request.UserID, request.MailID);
-
-//        return new ResMailReceiveDTO() { Result = errorCode };
-//    }
-//}
+    /// <summary>
+    /// 에러가 없는지 체크합니다.
+    /// </summary>
+    bool Successed(ErrorCode errorCode)
+    {
+        return errorCode == ErrorCode.None;
+    }
+}
