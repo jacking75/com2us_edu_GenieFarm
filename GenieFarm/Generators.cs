@@ -1,4 +1,6 @@
-﻿public static class RedisLockKeyGenerator
+﻿using System.Security.Cryptography;
+
+public static class RedisLockKeyGenerator
 {
     public static string Create(string userId)
     {
@@ -29,5 +31,22 @@ public static class EventIdGenerator
     public static EventId Create(UInt16 eventId, string eventIdName)
     {
         return new EventId(eventId, eventIdName);
+    }
+}
+
+public static class TokenGenerator
+{
+    private const string AllowableCharacters = "abcdefghijklmnopqrstuvwxyz0123456789";
+
+    public static string Create()
+    {
+        // 랜덤하게 토큰을 생성
+        var bytes = new Byte[25];
+        using (var random = RandomNumberGenerator.Create())
+        {
+            random.GetBytes(bytes);
+        }
+
+        return new string(bytes.Select(x => AllowableCharacters[x % AllowableCharacters.Length]).ToArray());
     }
 }

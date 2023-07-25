@@ -49,6 +49,7 @@ public enum ErrorCode : UInt16
 
     /* AttendanceService */
     AttendanceService_GetAttendanceData,
+    AttendanceService_ValidateLastAttendance,
     AttendanceService_UpdateAttendanceData_AffectedRowOutOfRange,
     AttendanceService_UpdateAttendanceData_Fail,
     AttendanceService_UpdateAttendanceData,
@@ -85,7 +86,7 @@ public enum ErrorCode : UInt16
 
     /* AttendController */
     Attend_Fail_GetAttendData,
-    Attend_Fail_AlreadyAttended,
+    Attend_Fail_NotAttendable,
     Attend_Fail_PassDataNotExists,
     Attend_Fail_AttendException,
 
