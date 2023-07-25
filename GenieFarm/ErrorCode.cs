@@ -23,26 +23,7 @@ public enum ErrorCode : UInt16
     Redis_Fail_SetToken = 200,
     Redis_Fail_DeleteToken,
 
-    // GameDB
-    GameDB_Fail_CreateDefaultData = 1000,
-    GameDB_Fail_CreateDefaultFarmData,
-    GameDB_Fail_UserInfoNotExistsByPlayerID,
-    GameDB_Fail_AttendDataNotExistsByPlayerID,
-    GameDB_Fail_FarmInfoNotExistsByPlayerID,
-    GameDB_Fail_UserInfoNotExistsByUserID,
-    GameDB_Fail_AttendDataNotExistsByUserID,
-    GameDB_Fail_FarmInfoNotExistsByUserID,
-    GameDB_Fail_InsertedDuplicatedNickname,
-    GameDB_Fail_CreateDefaultAttendData,
-    GameDB_Fail_UpdateLastLogin,
-    GameDB_Fail_InsertDefaultItem,
-    GameDB_Fail_UpdatedAttendanceRowOutOfRange,
-    GameDB_Fail_UpdateAttendDataException,
-    GameDB_Fail_SendRewardIntoMailbox,
-    GameDB_Fail_SendRewardException,
-    GameDB_Fail_SendMailAttendRewardException,
-    GameDB_Fail_CreateAttendRewardItem,
-
+    // Services
     /* AuthCheckService */
     AuthCheckService_GetUserId_UserNotExists = 2000,
     AuthCheckService_CheckPlayerExists_NotExists,
@@ -66,7 +47,6 @@ public enum ErrorCode : UInt16
     AuthCheckService_CreateDefaultItems_AffectedRowOutOfRange,
     AuthCheckService_UpdateLastLoginAt_AffectedRowOutOfRange,
 
-
     /* AttendanceService */
     AttendanceService_GetAttendanceData,
     AttendanceService_UpdateAttendanceData_AffectedRowOutOfRange,
@@ -79,7 +59,6 @@ public enum ErrorCode : UInt16
     AttendanceService_SendRewardIntoMail,
     AttendanceService_SendRewardIntoMail_InsertedRowOutOfRange,
     AttendanceService_SendRewardIntoMail_Fail,
-
 
     /* LoadDataService */
     LoadDataService_GetDefaultGameDataByUserId_UserData,
