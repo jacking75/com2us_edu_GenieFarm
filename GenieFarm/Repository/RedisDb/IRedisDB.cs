@@ -5,6 +5,6 @@ public interface IRedisDb
     public Task<string?> GetAsync(string key);
     public Task<bool> DeleteAsync(string key);
     public Task<bool> AcquireRequest(string userId);
-    public Task<bool> ReleaseRequest(string authToken, string path);
+    public Task<bool> ReleaseRequest(string userId);
     public Task<bool> CompareMemoryKeyValue(string key, string value);
 }

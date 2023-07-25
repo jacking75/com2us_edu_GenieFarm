@@ -41,7 +41,7 @@ public class AuthCheckMiddleware
 
         await _next(context);
 
-        await _redisDb.ReleaseRequest(authToken, path!);
+        await _redisDb.ReleaseRequest(userId);
     }
     
     bool GetAuthDataFromHeader(HttpContext context, out string userId, out string authToken)

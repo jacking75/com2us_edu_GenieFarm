@@ -53,10 +53,11 @@ public class RedisDb : IRedisDb
         return await query.SetAsync("", null, StackExchange.Redis.When.NotExists);
     }
 
-    public async Task<bool> ReleaseRequest(string authToken, string path)
+    public async Task<bool> ReleaseRequest(string userId)
     {
-        StringBuilder sb = new StringBuilder(authToken).Append(path);
-        var query = new RedisString<string>(_redisConn, sb.ToString(), null);
+        var key = RedisLockKeyGenerator.Create(userId);
+
+        var query = new RedisString<string>(_redisConn, key, null);
         return await query.DeleteAsync();
     }
 
