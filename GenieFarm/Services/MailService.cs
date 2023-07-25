@@ -24,11 +24,6 @@
 
         // 페이지에 해당하는 메일 리스트 불러오기
         var mailList = await _gameDb.GetMailListByPage(userId, page);
-        if (!ValidateMailList(mailList))
-        {
-            return new (ErrorCode.MailService_PageNotExists, null);
-        }
-
         return new (ErrorCode.None, mailList);
     }
 
@@ -38,13 +33,5 @@
     bool ValidatePage(Int32 page)
     {
         return page > 0;
-    }
-
-    /// <summary>
-    /// 요청한 페이지에 메일이 존재하는지 체크합니다.
-    /// </summary>
-    bool ValidateMailList(List<MailModel> mailList)
-    {
-        return mailList.Count > 0;
     }
 }

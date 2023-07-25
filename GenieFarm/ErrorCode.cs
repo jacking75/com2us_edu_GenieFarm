@@ -69,7 +69,6 @@ public enum ErrorCode : UInt16
 
     /* MailService */
     MailService_InvalidPageNum,
-    MailService_PageNotExists,
 
 
     // API
