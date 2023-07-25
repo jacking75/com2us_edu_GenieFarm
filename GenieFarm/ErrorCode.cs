@@ -69,6 +69,10 @@ public enum ErrorCode : UInt16
 
     /* MailService */
     MailService_InvalidPageNum,
+    MailService_MailNotExists,
+    MailService_SetItemAttribute_InvalidItemCodeAndCount,
+    MailService_GetMailByMailId_SetItemAttribute,
+    MailService_UpdateMailIsRead,
 
 
     // API
@@ -98,5 +102,7 @@ public enum ErrorCode : UInt16
     LoadAttendData_Fail,
 
     /* MailController */
-    LoadMailsByPage_InvalidPage,
+    LoadMailsByPage_Fail_InvalidPage,
+    LoadMail_Fail_MailNotExists,
+    LoadMail_Fail_IsReadUpdate,
 }

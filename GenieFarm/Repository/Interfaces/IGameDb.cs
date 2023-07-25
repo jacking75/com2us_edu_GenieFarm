@@ -28,4 +28,7 @@ public interface IGameDb
 
     // GameDb_Mail.cs
     public Task<List<MailModel>> GetMailListByPage(Int64 userId, Int32 page);
+    public Task<MailWithItemDTO?> GetMailByMailId(Int64 userId, Int64 mailId);
+    public Task<FarmItemModel?> GetItemCodeAndCountByItemId(Int64 itemId);
+    public Task<Int32> UpdateMailIsRead(Int64 userId, Int64 mailId);
 }
