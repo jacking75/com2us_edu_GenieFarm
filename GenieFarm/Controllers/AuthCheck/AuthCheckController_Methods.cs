@@ -56,17 +56,9 @@ public partial class AuthCheckController : ControllerBase
         }
     }
 
-    bool SuccessOrLogDebug<TPayload>(ErrorCode errorCode, TPayload payload)
+    bool Successed(ErrorCode errorCode)
     {
-        if (errorCode == ErrorCode.None)
-        {
-            return true;
-        }
-        else
-        {
-            _logger.ZLogDebugWithPayload(EventIdGenerator.Create(errorCode), payload, "Failed");
-            return false;
-        }
+        return errorCode == ErrorCode.None;
     }
 
     public class Security

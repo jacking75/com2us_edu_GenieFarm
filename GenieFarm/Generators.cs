@@ -8,13 +8,13 @@
 
 public static class AttendanceRewardMailGenerator
 {
-    public static MailModel Create(Int64 receiverId, Int64 senderId, Int32 attendanceCount, Int32 expiry, Int64 itemId, Int32 money)
+    public static MailModel Create(Int64 receiverId, Int64 senderId, Int32 attendanceCount, Int32 expiry, Int64 itemId, Int64 money)
     {
         return new MailModel { Title = $"출석 보상 지급",
                                Content = $"{attendanceCount}일차 출석 보상입니다.",
                                ReceiverId = receiverId, SenderId = senderId,
                                ExpiredAt = DateTime.Now.AddDays(expiry),
-                               ItemId = itemId, Gold = money,
+                               ItemId = itemId, Money = money,
                                IsDeleted = false, IsRead = false, IsReceived = false };
     }
 }

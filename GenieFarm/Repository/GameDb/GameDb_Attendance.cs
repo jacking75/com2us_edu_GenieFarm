@@ -36,4 +36,12 @@ public partial class GameDb : IGameDb
         return await _queryFactory.Query("mail_info")
                                   .InsertAsync(mail);
     }
+
+    public async Task<DateTime> GetPassEndDateByUserId(Int64 userId)
+    {
+        return await _queryFactory.Query("user_basicinfo")
+                                  .Where("UserId", userId)
+                                  .Select("PassEndDate")
+                                  .FirstOrDefaultAsync<DateTime>();
+    }
 }

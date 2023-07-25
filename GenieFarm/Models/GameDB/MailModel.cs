@@ -30,5 +30,5 @@ public class MailModel
 
     public bool IsReceived { get; set; }
 
-    public Int64 Gold { get; set; }
+    public Int64 Money { get; set; }
 }

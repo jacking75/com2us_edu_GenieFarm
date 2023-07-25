@@ -107,7 +107,7 @@ public enum ErrorCode : UInt16
     /* AttendController */
     Attend_Fail_GetAttendData,
     Attend_Fail_AlreadyAttended,
-    Attend_Fail_ReceivedAllMonthlyRewards,
+    Attend_Fail_PassDataNotExists,
     Attend_Fail_AttendException,
 
     /* LoadDataController */

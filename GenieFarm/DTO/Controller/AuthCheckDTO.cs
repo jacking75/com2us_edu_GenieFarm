@@ -15,7 +15,7 @@ public class ResLoginDTO : ErrorCodeDTO
 
 public class DefaultDataDTO
 {
-    public AccountModel? UserData { get; set; }
+    public UserBasicInfoModel? UserData { get; set; }
     public AttendanceModel? AttendData { get; set; }
     public FarmInfoModel? FarmInfoData { get; set; }
 }

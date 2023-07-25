@@ -1,7 +1,12 @@
-﻿using SqlKata;
+﻿using Org.BouncyCastle.Asn1.Ocsp;
+using SqlKata;
 using SqlKata.Execution;
 using ZLogger;
 
+/// <summary>
+/// 로그인, 계정 생성 등 AuthCheck와 관련된 비즈니스 로직을 처리하고 <br/>
+/// DB Operation Call을 수행하는 서비스 클래스
+/// </summary>
 public class AuthCheckService : IAuthCheckService
 {
     readonly ILogger<AuthCheckService> _logger;
@@ -17,6 +22,10 @@ public class AuthCheckService : IAuthCheckService
         _redisDb = redisDb;
     }
 
+    /// <summary>
+    /// PlayerID로 된 계정이 DB에 존재하는지 확인하고, <br/>
+    /// 존재한다면 ErrorCode.None을 리턴합니다.
+    /// </summary>
     public async Task<ErrorCode> CheckPlayerExists(string playerId)
     {
         var userId = await _gameDb.GetUserIdByPlayerId(playerId);
@@ -28,21 +37,33 @@ public class AuthCheckService : IAuthCheckService
         return ErrorCode.None;
     }
 
+    /// <summary>
+    /// PlayerID와 Nickname으로 기본 게임 데이터를 생성합니다. <br/>
+    /// 기본 유저 데이터 생성, 출석 데이터 생성, <br/>
+    /// 농장 기본 데이터 생성, 기본 아이템 Insert를 수행합니다.
+    /// </summary>
     public async Task<ErrorCode> CreateDefaultGameData(string playerId, string nickname)
     {
         var rollbackQueries = new List<SqlKata.Query>();
 
         // 유저 데이터 생성
         (var defaultUserDataResult, var userId) = await CreateDefaultUserData(playerId, nickname, rollbackQueries);
-        if (!SuccessOrLogDebug(defaultUserDataResult, new { PlayerID = playerId, Nickname = nickname }))
+        if (!Successed(defaultUserDataResult))
         {
+            _logger.ZLogDebugWithPayload(EventIdGenerator.Create(defaultUserDataResult),
+                                         new { PlayerID = playerId, Nickname = nickname },
+                                         "Failed");
+
             return ErrorCode.AuthCheckService_CreateDefaultGameData_DuplicatedNickname;
         }
 
         // 출석 데이터 생성
         var attendanceDataResult = await CreateDefaultAttendanceData(userId, rollbackQueries);
-        if (!SuccessOrLogDebug(attendanceDataResult, new { UserID = userId }))
+        if (!Successed(attendanceDataResult))
         {
+            _logger.ZLogDebugWithPayload(EventIdGenerator.Create(attendanceDataResult),
+                                         new { UserID = userId }, "Failed");
+
             await Rollback(attendanceDataResult, rollbackQueries);
 
             return ErrorCode.AuthCheckService_CreateDefaultGameData_AttendData;
@@ -50,8 +71,11 @@ public class AuthCheckService : IAuthCheckService
 
         // 농장 기본 데이터 생성
         var farmDataResult = await CreateDefaultFarmData(userId, rollbackQueries);
-        if (!SuccessOrLogDebug(farmDataResult, new { UserID = userId }))
+        if (!Successed(farmDataResult))
         {
+            _logger.ZLogDebugWithPayload(EventIdGenerator.Create(farmDataResult),
+                                         new { UserID = userId }, "Failed");
+
             await Rollback(attendanceDataResult, rollbackQueries);
 
             return ErrorCode.AuthCheckService_CreateDefaultGameData_FarmData;
@@ -59,8 +83,11 @@ public class AuthCheckService : IAuthCheckService
 
         // 기본 아이템 Insert
         var defaultItemResult = await CreateDefaultItems(userId, rollbackQueries);
-        if (!SuccessOrLogDebug(defaultItemResult, new { UserID = userId }))
+        if (!Successed(defaultItemResult))
         {
+            _logger.ZLogDebugWithPayload(EventIdGenerator.Create(defaultItemResult),
+                                        new { UserID = userId }, "Failed");
+
             await Rollback(attendanceDataResult, rollbackQueries);
 
             return ErrorCode.AuthCheckService_CreateDefaultGameData_Items;
@@ -69,6 +96,9 @@ public class AuthCheckService : IAuthCheckService
         return ErrorCode.None;
     }
 
+    /// <summary>
+    /// Hive PlayerID로 기본 게임 데이터를 로드합니다.
+    /// </summary>
     public async Task<Tuple<ErrorCode, DefaultDataDTO?>> GetDefaultGameData(string playerId)
     {
         var result = new DefaultDataDTO();
@@ -77,7 +107,7 @@ public class AuthCheckService : IAuthCheckService
         result.UserData = await _gameDb.GetDefaultUserDataByPlayerId(playerId);
         if (result.UserData == null)
         {
-            return new Tuple<ErrorCode, DefaultDataDTO?>(ErrorCode.AuthCheckService_GetDefaultGameDataByPlayerId_UserData, null);
+            return new (ErrorCode.AuthCheckService_GetDefaultGameDataByPlayerId_UserData, null);
         }
 
         // 출석 정보 로드
@@ -85,19 +115,23 @@ public class AuthCheckService : IAuthCheckService
         result.AttendData = await _gameDb.GetDefaultAttendDataByUserId(userId);
         if (result.AttendData == null)
         {
-            return new Tuple<ErrorCode, DefaultDataDTO?>(ErrorCode.AuthCheckService_GetDefaultGameDataByPlayerId_AttendData, null);
+            return new (ErrorCode.AuthCheckService_GetDefaultGameDataByPlayerId_AttendData, null);
         }
 
         // 농장 기본 정보 로드
         result.FarmInfoData = await _gameDb.GetDefaultFarmDataByUserId(userId);
         if (result.FarmInfoData == null)
         {
-            return new Tuple<ErrorCode, DefaultDataDTO?>(ErrorCode.AuthCheckService_GetDefaultGameDataByPlayerId_FarmData, null);
+            return new (ErrorCode.AuthCheckService_GetDefaultGameDataByPlayerId_FarmData, null);
         }
 
-        return new Tuple<ErrorCode, DefaultDataDTO?>(ErrorCode.None, result);
+        return new (ErrorCode.None, result);
     }
 
+    /// <summary>
+    /// 최종 로그인 시각을 갱신합니다.<br/>
+    /// 로그인 시에 사용됩니다.
+    /// </summary>
     public async Task<ErrorCode> UpdateLastLoginAt(Int64 userId)
     {
         try
@@ -122,6 +156,9 @@ public class AuthCheckService : IAuthCheckService
         }
     }
 
+    /// <summary>
+    /// Redis에 토큰을 저장합니다.
+    /// </summary>
     public async Task<ErrorCode> SetTokenOnRedis(Int64 userId, string token)
     {
         // 마스터DB에서 토큰 유효시간 가져옴
@@ -136,6 +173,10 @@ public class AuthCheckService : IAuthCheckService
         return ErrorCode.None;
     }
 
+    /// <summary>
+    /// user_basicinfo 테이블에 기본 데이터를 생성하고, <br/>
+    /// UserID(Primary Key)값을 가져옵니다.
+    /// </summary>
     async Task<Tuple<ErrorCode, Int64>> CreateDefaultUserData(string playerId, string nickname, List<SqlKata.Query> queries)
     {
         try
@@ -147,7 +188,7 @@ public class AuthCheckService : IAuthCheckService
             var query = _gameDb.GetQuery("user_basicinfo").Where("UserId", userId).AsDelete();
             queries.Add(query);
 
-            return new Tuple<ErrorCode, Int64>(ErrorCode.None, userId);
+            return new (ErrorCode.None, userId);
         }
         catch (Exception ex)
         {
@@ -156,10 +197,13 @@ public class AuthCheckService : IAuthCheckService
             _logger.ZLogDebugWithPayload(EventIdGenerator.Create(errorCode), ex,
                                          new { PlayerID = playerId, Nickname = nickname }, "Failed");
 
-            return new Tuple<ErrorCode, Int64>(errorCode, 0);
+            return new (errorCode, 0);
         }
     }
 
+    /// <summary>
+    /// user_attendance 테이블에 기본 데이터를 생성합니다.
+    /// </summary>
     async Task<ErrorCode> CreateDefaultAttendanceData(Int64 userId, List<SqlKata.Query> queries)
     {
         try
@@ -188,6 +232,9 @@ public class AuthCheckService : IAuthCheckService
         }
     }
 
+    /// <summary>
+    /// farm_info 테이블에 농장 기본 데이터를 생성합니다.
+    /// </summary>
     async Task<ErrorCode> CreateDefaultFarmData(Int64 userId, List<SqlKata.Query> queries)
     {
         try
@@ -216,6 +263,9 @@ public class AuthCheckService : IAuthCheckService
         }
     }
 
+    /// <summary>
+    /// farm_item 테이블에 기본 지급 아이템들을 Insert합니다.
+    /// </summary>
     async Task<ErrorCode> CreateDefaultItems(Int64 userId, List<SqlKata.Query> queries)
     {
         try
@@ -244,27 +294,46 @@ public class AuthCheckService : IAuthCheckService
         }
     }
 
-    bool SuccessOrLogDebug<TPayload>(ErrorCode errorCode, TPayload payload)
+    /// <summary>
+    /// 에러코드가 ErrorCode.None이면 true를 리턴하고, 아니면 false를 리턴합니다.
+    /// </summary>
+    bool Successed(ErrorCode errorCode)
     {
-        if (errorCode == ErrorCode.None)
-        {
-            return true;
-        }
-        else
-        {
-            _logger.ZLogDebugWithPayload(EventIdGenerator.Create(errorCode), payload, "Failed");
-            return false;
-        }
+        return errorCode == ErrorCode.None;
     }
 
+    /// <summary>
+    /// GameDB에 쿼리 롤백을 요청합니다.
+    /// </summary>
     async Task Rollback(ErrorCode errorCode, List<SqlKata.Query> queries)
     {
         await _gameDb.Rollback(errorCode, queries);
     }
 
+    /// <summary>
+    /// Update, Insert, Delete 쿼리의 영향을 받은 행의 개수가 <br/>
+    /// 기대한 값과 동일한지 판단해 true, false를 리턴합니다.
+    /// </summary>
     bool ValidateAffectedRow(Int32 affectedRow, Int32 expected)
     {
         return affectedRow == expected;
     }
 
+    /// <summary>
+    /// Redis에 있는 토큰을 삭제합니다.
+    /// </summary>
+    public async Task<ErrorCode> DeleteTokenOnRedis(Int64 userId)
+    {
+        if (false == await _redisDb.DeleteAsync(userId.ToString()))
+        {
+            var errorCode = ErrorCode.Redis_Fail_DeleteToken;
+
+            _logger.ZLogDebugWithPayload(EventIdGenerator.Create(errorCode),
+                                         new { UserID = userId }, "Failed");
+
+            return errorCode;
+        }
+
+        return ErrorCode.None;
+    }
 }

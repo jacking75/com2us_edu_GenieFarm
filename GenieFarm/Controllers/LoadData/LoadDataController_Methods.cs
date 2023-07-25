@@ -3,17 +3,9 @@ using ZLogger;
 
 public partial class LoadDataController : ControllerBase
 {
-    bool SuccessOrLogDebug<TPayload>(ErrorCode errorCode, TPayload payload)
+    bool Successed(ErrorCode errorCode)
     {
-        if (errorCode == ErrorCode.None)
-        {
-            return true;
-        }
-        else
-        {
-            _logger.ZLogDebugWithPayload(EventIdGenerator.Create(errorCode), payload, "Failed");
-            return false;
-        }
+        return errorCode == ErrorCode.None;
     }
 
     void LogInfoOnSuccess<TPayload>(string method, TPayload payload)

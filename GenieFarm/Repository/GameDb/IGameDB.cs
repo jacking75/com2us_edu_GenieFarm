@@ -7,8 +7,8 @@ public interface IGameDb
 
     // GameDb_AuthCheck.cs
     public Task<Int64> GetUserIdByPlayerId(string playerId);
-    public Task<AccountModel?> GetDefaultUserDataByPlayerId(string playerId);
-    public Task<AccountModel?> GetDefaultUserDataByUserId(Int64 userId);
+    public Task<UserBasicInfoModel?> GetDefaultUserDataByPlayerId(string playerId);
+    public Task<UserBasicInfoModel?> GetDefaultUserDataByUserId(Int64 userId);
     public Task<FarmInfoModel?> GetDefaultFarmDataByUserId(Int64 userId);
 
     public Task<Int64> InsertGetIdDefaultUserData(string playerId, string nickname);
@@ -20,6 +20,7 @@ public interface IGameDb
 
     // GameDb_Attendance.cs
     public Task<AttendanceModel?> GetDefaultAttendDataByUserId(Int64 userId);
+    public Task<DateTime> GetPassEndDateByUserId(Int64 userId);
     public Task<Int32> UpdateAttendanceData(Int64 userId, Int32 newAttendanceCount);
     public Task<Int64> InsertGetIdNewItem(Int64 itemCode, Int16 itemCount);
     public Task<Int32> InsertAttendanceRewardMail(Int64 userId, MailModel mail);

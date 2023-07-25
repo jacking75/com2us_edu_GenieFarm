@@ -19,13 +19,20 @@ public partial class LoadDataController : ControllerBase
         _loadDataService = loadDataService;
     }
 
+    /// <summary>
+    /// 게임 데이터 로드 API <br/>
+    /// 유저의 기본 게임 데이터(기본 유저 데이터, 농장, 출석 데이터)를 로드합니다.
+    /// </summary>
     [HttpPost("defaultData")]
     public async Task<ResDefaultDataDTO> LoadDefaultData(ReqDefaultDataDTO request)
     {
         // 게임 데이터 로드
         (var defaultDataResult, var defaultData) = await _loadDataService.GetDefaultGameData(request.UserID);
-        if (!SuccessOrLogDebug(defaultDataResult, new { UserID = request.UserID }))
+        if (!Successed(defaultDataResult))
         {
+            _logger.ZLogDebugWithPayload(EventIdGenerator.Create(defaultDataResult),
+                                         new { UserID = request.UserID }, "Failed");
+
             return new ResDefaultDataDTO() { Result = ErrorCode.LoadDefaultData_Fail };
         }
 
@@ -33,13 +40,20 @@ public partial class LoadDataController : ControllerBase
         return new ResDefaultDataDTO() { Result = ErrorCode.None, DefaultData = defaultData };
     }
 
+    /// <summary>
+    /// 출석 데이터 로드 API <br/>
+    /// 유저의 출석 데이터를 로드합니다.
+    /// </summary>
     [HttpPost("attendData")]
     public async Task<ResAttendDataDTO> LoadAttendData(ReqAttendDataDTO request)
     {
         // 출석 데이터 로드
         (var attendDataResult, var attendData) = await _loadDataService.GetAttendanceDataByUserId(request.UserID);
-        if (!SuccessOrLogDebug(attendDataResult, new { UserID = request.UserID }))
+        if (!Successed(attendDataResult))
         {
+            _logger.ZLogDebugWithPayload(EventIdGenerator.Create(attendDataResult),
+                                         new { UserID = request.UserID }, "Failed");
+
             return new ResAttendDataDTO() { Result = ErrorCode.LoadAttendData_Fail };
         }
 

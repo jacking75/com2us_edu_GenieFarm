@@ -1,4 +1,4 @@
-public class AccountModel
+public class UserBasicInfoModel
 {
     public Int64 UserId { get; set; }
 
@@ -7,4 +7,6 @@ public class AccountModel
     public string Nickname { get; set; } = string.Empty;
 
     public DateTime LastLoginAt { get; set; }
+
+    public DateTime PassEndDate { get; set; }
 }

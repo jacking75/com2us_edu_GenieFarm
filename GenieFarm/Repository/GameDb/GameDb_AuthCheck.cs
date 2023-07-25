@@ -57,18 +57,18 @@ public partial class GameDb : IGameDb
         return result;
     }
 
-    public async Task<AccountModel?> GetDefaultUserDataByPlayerId(string playerId)
+    public async Task<UserBasicInfoModel?> GetDefaultUserDataByPlayerId(string playerId)
     {
         var userData = (await _queryFactory.Query("user_basicinfo").Where("PlayerId", playerId)
-                                           .GetAsync<AccountModel>()).FirstOrDefault();
+                                           .GetAsync<UserBasicInfoModel>()).FirstOrDefault();
 
         return userData;
     }
 
-    public async Task<AccountModel?> GetDefaultUserDataByUserId(Int64 userId)
+    public async Task<UserBasicInfoModel?> GetDefaultUserDataByUserId(Int64 userId)
     {
         var userData = (await _queryFactory.Query("user_basicinfo").Where("UserId", userId)
-                                           .GetAsync<AccountModel>()).FirstOrDefault();
+                                           .GetAsync<UserBasicInfoModel>()).FirstOrDefault();
 
         return userData;
     }
