@@ -1,4 +1,6 @@
-﻿using Org.BouncyCastle.Asn1.Ocsp;
+﻿using System.Configuration;
+using System.Net;
+using Org.BouncyCastle.Asn1.Ocsp;
 using SqlKata;
 using SqlKata.Execution;
 using ZLogger;
@@ -13,13 +15,60 @@ public class AuthCheckService : IAuthCheckService
     readonly IGameDb _gameDb;
     readonly IMasterDb _masterDb;
     readonly IRedisDb _redisDb;
+    string _hiveServerUrl;
 
-    public AuthCheckService(ILogger<AuthCheckService> logger, IGameDb gameDb, IMasterDb masterDb, IRedisDb redisDb)
+    public AuthCheckService(ILogger<AuthCheckService> logger, IGameDb gameDb, IMasterDb masterDb, IRedisDb redisDb, IConfiguration configuration)
     {
         _logger = logger;
         _gameDb = gameDb;
         _masterDb = masterDb;
         _redisDb = redisDb;
+        _hiveServerUrl = configuration.GetSection("HiveServer")["Address"]! + "/authcheck";
+    }
+
+    /// <summary>
+    /// Hive 서버에 인증을 요청합니다.
+    /// </summary>
+    public async Task<bool> AuthCheckToHive(string playerID, string authToken)
+    {
+        try
+        {
+            // 인증 요청
+            HttpClient client = new();
+            var hiveResponse = await client.PostAsJsonAsync(_hiveServerUrl,
+                                                            new { AuthID = playerID,
+                                                                  AuthToken = authToken });
+
+            // 응답 체크
+            if (ValidateHiveResponse(hiveResponse))
+            {
+                var statusCode = hiveResponse == null ? 0 : hiveResponse.StatusCode;
+                var errorCode = ErrorCode.Hive_Fail_InvalidResponse;
+
+                _logger.ZLogDebugWithPayload(EventIdGenerator.Create(errorCode),
+                                             new
+                                             {
+                                                 PlayerID = playerID,
+                                                 AuthToken = authToken,
+                                                 StatusCode = statusCode
+                                             }, "Failed");
+
+                return false;
+            }
+
+            // 인증 정보(ErrorCode) 체크
+            var authResult = await hiveResponse.Content.ReadFromJsonAsync<ErrorCodeDTO>();
+            return ValidateHiveAuthErrorCode(authResult);
+        }
+        catch (Exception ex)
+        {
+            var errorCode = ErrorCode.Hive_Fail_AuthCheckException;
+
+            _logger.ZLogDebugWithPayload(EventIdGenerator.Create(errorCode), ex,
+                                         new { PlayerID = playerID, AuthToken = authToken }, "Failed");
+
+            return false;
+        }
     }
 
     /// <summary>
@@ -335,5 +384,31 @@ public class AuthCheckService : IAuthCheckService
         }
 
         return ErrorCode.None;
+    }
+
+    /// <summary>
+    /// Hive 서버에서 온 응답이 유효한지 null 체크와 StatusCode 체크를 합니다.
+    /// </summary>
+    bool ValidateHiveResponse(HttpResponseMessage? response)
+    {
+        if (response == null || response.StatusCode != HttpStatusCode.OK)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Hive 서버에서 온 에러코드가 ErrorCode.None인지 체크하고 맞다면 true를 반환합니다.
+    /// </summary>
+    bool ValidateHiveAuthErrorCode(ErrorCodeDTO? authResult)
+    {
+        if (authResult == null || authResult.Result != ErrorCode.None)
+        {
+            return false;
+        }
+
+        return true;
     }
 }

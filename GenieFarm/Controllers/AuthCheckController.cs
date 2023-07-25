@@ -9,13 +9,12 @@ using ZLogger;
 [ApiController]
 [Route("api/auth")]
 
-public partial class AuthCheckController : ControllerBase
+public class AuthCheckController : ControllerBase
 {
     ILogger<AuthCheckController> _logger;
     IAuthCheckService _authCheckService;
     IGameDb _gameDb;
     IRedisDb _redisDb;
-    string _hiveServerUrl;
 
     public AuthCheckController(ILogger<AuthCheckController> logger, IGameDb gameDb, IRedisDb redisDb, IAuthCheckService authCheckService, IConfiguration configuration)
     {
@@ -23,7 +22,6 @@ public partial class AuthCheckController : ControllerBase
         _gameDb = gameDb;
         _redisDb = redisDb;
         _authCheckService = authCheckService;
-        _hiveServerUrl = configuration.GetSection("HiveServer")["Address"]! + "/authcheck";
     }
 
     /// <summary>
@@ -34,7 +32,7 @@ public partial class AuthCheckController : ControllerBase
     public async Task<ResCreateDTO> Create(ReqCreateDTO request)
     {
         // 하이브 서버에 인증 요청
-        if (!await AuthCheckToHive(request.PlayerID, request.AuthToken))
+        if (!await _authCheckService.AuthCheckToHive(request.PlayerID, request.AuthToken))
         {
             _logger.ZLogDebugWithPayload(EventIdGenerator.Create(ErrorCode.Hive_Fail_AuthCheck),
                                          new { PlayerID = request.PlayerID,
@@ -72,7 +70,7 @@ public partial class AuthCheckController : ControllerBase
     public async Task<ResLoginDTO> Login(ReqLoginDTO request)
     {
         // 하이브 서버에 인증 요청
-        if (!await AuthCheckToHive(request.PlayerID, request.AuthToken))
+        if (!await _authCheckService.AuthCheckToHive(request.PlayerID, request.AuthToken))
         {
             _logger.ZLogDebugWithPayload(EventIdGenerator.Create(ErrorCode.Hive_Fail_AuthCheckOnLogin),
                                          new { PlayerID = request.PlayerID,
@@ -103,7 +101,7 @@ public partial class AuthCheckController : ControllerBase
         }
 
         // 토큰 생성 및 Redis에 세팅
-        var token = Security.CreateAuthToken();
+        var token = TokenGenerator.Create();
         var setTokenResult = await _authCheckService.SetTokenOnRedis(userId, token);
         if (!Successed(setTokenResult))
         {
@@ -136,5 +134,21 @@ public partial class AuthCheckController : ControllerBase
 
         LogInfoOnSuccess("Logout", new { PlayerID = request.UserID });
         return new ResLogoutDTO() { Result = ErrorCode.None };
+    }
+
+    /// <summary>
+    /// 성공한 API 요청에 대해 통계용 로그를 남깁니다.
+    /// </summary>
+    void LogInfoOnSuccess<TPayload>(string method, TPayload payload)
+    {
+        _logger.ZLogInformationWithPayload(EventIdGenerator.Create(0, method), payload, "Statistic");
+    }
+
+    /// <summary>
+    /// 에러가 없는지 체크합니다.
+    /// </summary>
+    bool Successed(ErrorCode errorCode)
+    {
+        return errorCode == ErrorCode.None;
     }
 }

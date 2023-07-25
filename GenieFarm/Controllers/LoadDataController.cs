@@ -4,7 +4,7 @@ using ZLogger;
 [ApiController]
 [Route("api/load")]
 
-public partial class LoadDataController : ControllerBase
+public class LoadDataController : ControllerBase
 {
     ILogger<LoadDataController> _logger;
     IGameDb _gameDb;
@@ -62,5 +62,21 @@ public partial class LoadDataController : ControllerBase
 
         LogInfoOnSuccess("LoadAttendData", new { UserID = request.UserID });
         return new ResAttendDataDTO() { Result = ErrorCode.None, MonthlyRewardList = monthlyRewardList, AttendData = attendData };
+    }
+
+    /// <summary>
+    /// 성공한 API 요청에 대해 통계용 로그를 남깁니다.
+    /// </summary>
+    void LogInfoOnSuccess<TPayload>(string method, TPayload payload)
+    {
+        _logger.ZLogInformationWithPayload(EventIdGenerator.Create(0, method), payload, "Statistic");
+    }
+
+    /// <summary>
+    /// 에러가 없는지 체크합니다.
+    /// </summary>
+    bool Successed(ErrorCode errorCode)
+    {
+        return errorCode == ErrorCode.None;
     }
 }

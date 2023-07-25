@@ -3,7 +3,7 @@ using ZLogger;
 
 [ApiController]
 [Route("api/attend")]
-public partial class AttendanceController : ControllerBase
+public class AttendanceController : ControllerBase
 {
     ILogger<AttendanceController> _logger;
     IGameDb _gameDb;
@@ -23,20 +23,14 @@ public partial class AttendanceController : ControllerBase
     [HttpPost]
     public async Task<ResAttendDTO> Attend(ReqAttendDTO request)
     {
-        // 출석 데이터 로드
+        // 출석 데이터 로드 및 출석 가능 여부 확인
         (var errorCode, var attendData) = await _attendanceService.GetAttendanceData(request.UserID);
         if (!Successed(errorCode))
         {
             _logger.ZLogDebugWithPayload(EventIdGenerator.Create(errorCode),
                                          new { UserID = request.UserID }, "Failed");
 
-            return new ResAttendDTO() { Result = ErrorCode.Attend_Fail_GetAttendData };
-        }
-
-        // 출석 가능한지 확인
-        if (!ValidateAttend(attendData!))
-        {
-            return new ResAttendDTO() { Result = ErrorCode.Attend_Fail_AlreadyAttended };
+            return new ResAttendDTO() { Result = ErrorCode.Attend_Fail_NotAttendable };
         }
 
         // 월간 구독 이용권 여부 조회
@@ -54,5 +48,21 @@ public partial class AttendanceController : ControllerBase
 
         LogInfoOnSuccess("Attend", new { UserID = request.UserID });
         return new ResAttendDTO() { Result = ErrorCode.None };
+    }
+
+    /// <summary>
+    /// 성공한 API 요청에 대해 통계용 로그를 남깁니다.
+    /// </summary>
+    void LogInfoOnSuccess<TPayload>(string method, TPayload payload)
+    {
+        _logger.ZLogInformationWithPayload(EventIdGenerator.Create(0, method), payload, "Statistic");
+    }
+
+    /// <summary>
+    /// 에러가 없는지 체크합니다.
+    /// </summary>
+    bool Successed(ErrorCode errorCode)
+    {
+        return errorCode == ErrorCode.None;
     }
 }

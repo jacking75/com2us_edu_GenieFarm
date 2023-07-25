@@ -31,4 +31,9 @@
     /// Redis에 있는 토큰을 삭제합니다.
     /// </summary>
     public Task<ErrorCode> DeleteTokenOnRedis(Int64 userId);
+
+    /// <summary>
+    /// Hive 서버에 인증을 요청합니다.
+    /// </summary>
+    public Task<bool> AuthCheckToHive(string playerId, string token);
 }

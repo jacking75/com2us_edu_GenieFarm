@@ -21,7 +21,8 @@ public class AttendanceService : IAttendanceService
     }
 
     /// <summary>
-    /// 유저ID를 기준으로 출석 데이터를 로드한다.
+    /// 유저ID를 기준으로 출석 데이터를 로드하고, <br/>
+    /// 출석할 수 있는지 체크합니다.
     /// </summary>
     public async Task<Tuple<ErrorCode, AttendanceModel?>> GetAttendanceData(Int64 userId)
     {
@@ -32,11 +33,17 @@ public class AttendanceService : IAttendanceService
             return new (ErrorCode.AttendanceService_GetAttendanceData, null);
         }
 
+        // 출석 가능 여부 체크
+        if (!ValidateLastAttendance(attendData))
+        {
+            return new (ErrorCode.AttendanceService_ValidateLastAttendance, null);
+        }
+
         return new (ErrorCode.None, attendData);
     }
 
     /// <summary>
-    /// 유저ID를 현재 시각 기준으로 출석 처리한다.
+    /// 유저ID를 현재 시각 기준으로 출석 처리합니다.
     /// </summary>
     public async Task<ErrorCode> Attend(long userId, AttendanceModel attendData, bool usingPass)
     {
@@ -302,5 +309,26 @@ public class AttendanceService : IAttendanceService
 
         // 그 외에는 누적
         return attendData.AttendanceCount + 1;
+    }
+
+    /// <summary>
+    /// 마지막 출석일로부터 1일 이상 차이가 나면 출석 가능
+    /// </summary>
+    bool ValidateLastAttendance(AttendanceModel attendData)
+    {
+        return IsAnotherDay(attendData.LastAttendance);
+    }
+
+    /// <summary>
+    /// 주어진 날짜가 오늘 날짜와 1일 이상 차이가 나는지 비교
+    /// </summary>
+    bool IsAnotherDay(DateTime lastAttendDate)
+    {
+        // 현재 날짜와 마지막 출석 날짜가 1일 이상 차이가 나면 True
+        var currentDate = DateTime.Parse(DateTime.Now.ToShortDateString());
+        lastAttendDate = DateTime.Parse(lastAttendDate.ToShortDateString());
+        var diff = currentDate - lastAttendDate;
+
+        return diff > TimeSpan.FromDays(0);
     }
 }
