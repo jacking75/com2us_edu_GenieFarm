@@ -37,11 +37,12 @@ public partial class GameDb : IGameDb
                                   .InsertAsync(mail);
     }
 
-    public async Task<DateTime> GetPassEndDateByUserId(Int64 userId)
+    public async Task<DateTime?> GetPassEndDateByUserId(Int64 userId)
     {
-        return await _queryFactory.Query("user_basicinfo")
-                                  .Where("UserId", userId)
-                                  .Select("PassEndDate")
-                                  .FirstOrDefaultAsync<DateTime>();
+        return (await _queryFactory.Query("user_basicinfo")
+                                   .Select("PassEndDate")
+                                   .Where("UserId", userId)
+                                   .GetAsync<DateTime?>())
+                                   .FirstOrDefault();
     }
 }

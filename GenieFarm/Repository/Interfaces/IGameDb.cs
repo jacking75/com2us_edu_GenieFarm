@@ -20,7 +20,7 @@ public interface IGameDb
 
     // GameDb_Attendance.cs
     public Task<AttendanceModel?> GetDefaultAttendDataByUserId(Int64 userId);
-    public Task<DateTime> GetPassEndDateByUserId(Int64 userId);
+    public Task<DateTime?> GetPassEndDateByUserId(Int64 userId);
     public Task<Int32> UpdateAttendanceData(Int64 userId, Int32 newAttendanceCount);
     public Task<Int64> InsertGetIdNewItem(Int64 itemCode, Int16 itemCount);
     public Task<Int32> InsertAttendanceRewardMail(Int64 userId, MailModel mail);
