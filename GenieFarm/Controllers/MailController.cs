@@ -8,13 +8,11 @@ namespace WebAPIServer.Controllers;
 public class MailController : ControllerBase
 {
     readonly ILogger<MailController> _logger;
-    readonly IGameDb _gameDb;
     readonly IMailService _mailService;
 
-    public MailController(ILogger<MailController> Logger, IGameDb GameDb, IMailService mailService)
+    public MailController(ILogger<MailController> Logger, IMailService mailService)
     {
         _logger = Logger;
-        _gameDb = GameDb;
         _mailService = mailService;
     }
 

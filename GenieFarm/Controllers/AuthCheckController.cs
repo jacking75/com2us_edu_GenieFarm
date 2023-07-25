@@ -13,14 +13,10 @@ public class AuthCheckController : ControllerBase
 {
     ILogger<AuthCheckController> _logger;
     IAuthCheckService _authCheckService;
-    IGameDb _gameDb;
-    IRedisDb _redisDb;
 
-    public AuthCheckController(ILogger<AuthCheckController> logger, IGameDb gameDb, IRedisDb redisDb, IAuthCheckService authCheckService, IConfiguration configuration)
+    public AuthCheckController(ILogger<AuthCheckController> logger, IAuthCheckService authCheckService, IConfiguration configuration)
     {
         _logger = logger;
-        _gameDb = gameDb;
-        _redisDb = redisDb;
         _authCheckService = authCheckService;
     }
 

@@ -6,13 +6,11 @@ using ZLogger;
 public class AttendanceController : ControllerBase
 {
     ILogger<AttendanceController> _logger;
-    IGameDb _gameDb;
     IAttendanceService _attendanceService;
 
-    public AttendanceController(ILogger<AttendanceController> logger, IGameDb gameDb, IAttendanceService attendanceService)
+    public AttendanceController(ILogger<AttendanceController> logger, IAttendanceService attendanceService)
     {
         _logger = logger;
-        _gameDb = gameDb;
         _attendanceService = attendanceService;
     }
 

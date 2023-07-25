@@ -7,14 +7,12 @@ using ZLogger;
 public class LoadDataController : ControllerBase
 {
     ILogger<LoadDataController> _logger;
-    IGameDb _gameDb;
     IMasterDb _masterDb;
     ILoadDataService _loadDataService;
 
-    public LoadDataController(ILogger<LoadDataController> logger, IGameDb gameDb, IMasterDb masterDb, ILoadDataService loadDataService)
+    public LoadDataController(ILogger<LoadDataController> logger, IMasterDb masterDb, ILoadDataService loadDataService)
     {
         _logger = logger;
-        _gameDb = gameDb;
         _masterDb = masterDb;
         _loadDataService = loadDataService;
     }
