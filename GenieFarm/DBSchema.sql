@@ -71,6 +71,7 @@ CREATE TABLE IF NOT EXISTS `farm_db`.`mail_info` (
   `IsDeleted` TINYINT NOT NULL DEFAULT '0',
   `ItemId` BIGINT NOT NULL,
   `IsReceived` TINYINT NOT NULL DEFAULT '0',
+  `Money` BIGINT NULL DEFAULT NULL,
   PRIMARY KEY (`MailId`))
 ENGINE = InnoDB
 AUTO_INCREMENT = 99
@@ -85,7 +86,6 @@ CREATE TABLE IF NOT EXISTS `farm_db`.`user_attendance` (
   `UserId` BIGINT NOT NULL,
   `AttendanceCount` TINYINT NOT NULL DEFAULT '0', /* 누적 출석 수 */
   `LastAttendance` DATETIME NULL DEFAULT NULL, /* 최종 출석일 */
-  `PassEndDate` DATETIME NULL DEFAULT NULL, /* 월간 구독제의 종료일자 */
   PRIMARY KEY (`UserId`))
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb4
@@ -100,6 +100,7 @@ CREATE TABLE IF NOT EXISTS `farm_db`.`user_basicinfo` (
   `PlayerId` VARCHAR(14) NOT NULL,
   `Nickname` VARCHAR(10) NOT NULL,
   `LastLoginAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, /* 친구 목록에서 마지막 접속 일자를 표시하기 위한 최종 접속 시각 */
+  `PassEndDate` DATETIME NULL DEFAULT NULL, /* 월간 구독제의 종료일자 */
   PRIMARY KEY (`UserId`),
   UNIQUE INDEX `Nickname_UNIQUE` (`Nickname` ASC) VISIBLE,
   UNIQUE INDEX `AuthId_UNIQUE` (`PlayerId` ASC) VISIBLE)
@@ -176,6 +177,18 @@ CREATE TABLE IF NOT EXISTS `master_db`.`item_type` (
   PRIMARY KEY (`TypeCode`))
 ENGINE = InnoDB
 AUTO_INCREMENT = 5
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_0900_ai_ci;
+
+
+-- -----------------------------------------------------
+-- Table `master_db`.`num_values`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `master_db`.`num_values` (
+  `key` VARCHAR(30) NOT NULL, /* Key값 */
+  `value` INT NOT NULL, /* Key에 대응하는 Value값 */
+  UNIQUE INDEX `key` (`key` ASC))
+ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb4
 COLLATE = utf8mb4_0900_ai_ci;
 
