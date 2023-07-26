@@ -34,6 +34,12 @@
 | 우편 삭제                                       | ⬜        |
 | 우편 발송                                       | ⬜        |
 
+- **아이템 기능**
+
+| 기능                       | 완료 여부 |
+| -------------------------- | --------- |
+| 소유 아이템 페이지 별 조회 | ⬜        |
+
 - **경매장 기능**
 
 | 기능               | 완료 여부 |
@@ -494,8 +500,9 @@ Content-Type: application/json
             "expiredAt": "2023-07-28T15:17:59",
             "isRead": false,
             "isDeleted": false,
-            "itemId": 108,
             "isReceived": false,
+            "itemCode": 1,
+            "itemCount": 30,
             "money": 0
         },
         {
@@ -508,8 +515,9 @@ Content-Type: application/json
             "expiredAt": "2023-07-31T19:05:17",
             "isRead": false,
             "isDeleted": false,
-            "itemId": 118,
             "isReceived": false,
+            "itemCode": 2,
+            "itemCount": 30,
             "money": 0
         }
     ],
@@ -537,7 +545,7 @@ Content-Type: application/json
    - 여기까지 미들웨어에서 수행
 4. 메일 데이터 로드
    - 메일 ID가 일치하고 메일 수신자 ID가 요청 유저 ID와 일치하는 행을 반환
-5. (아이템이 첨부된 경우) ItemCode로 아이템 데이터 로드
+5. (아이템이 첨부된 경우) 마스터DB에서 가져온 아이템 데이터를 추가
 
 #### 클라이언트 → 서버 전송 데이터
 
@@ -576,18 +584,18 @@ Content-Type: application/json
             "buyPrice": 2,
             "desc": "싱싱한 벼이다."
         },
-        "itemCount": 30,
-        "mailId": 102,
-        "receiverId": 96,
+        "mailId": 144,
+        "receiverId": 112,
         "senderId": 0,
         "title": "출석 보상 지급",
         "content": "1일차 출석 보상입니다.",
-        "obtainedAt": "2023-07-21T15:06:52",
-        "expiredAt": "2023-07-28T15:06:52",
-        "isRead": false,
+        "obtainedAt": "2023-07-26T12:11:48",
+        "expiredAt": "2023-08-02T12:11:48",
+        "isRead": true,
         "isDeleted": false,
-        "itemId": 97,
         "isReceived": false,
+        "itemCode": 1,
+        "itemCount": 30,
         "money": 0
     },
     "result": 0
