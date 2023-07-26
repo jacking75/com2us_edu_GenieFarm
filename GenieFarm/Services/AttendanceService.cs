@@ -114,8 +114,7 @@ public class AttendanceService : IAttendanceService
     }
 
     /// <summary>
-    /// 보상 데이터를 로드하고, 아이템을 생성해서 <br/>
-    /// 우편으로 지급합니다.
+    /// 보상 데이터를 로드해 우편으로 지급합니다.
     /// </summary>
     async Task<ErrorCode> SendRewardMail(Int64 userId, Int32 newAttendCount, bool usingPass, List<SqlKata.Query> queries)
     {
