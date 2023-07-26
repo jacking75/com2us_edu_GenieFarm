@@ -545,7 +545,6 @@ Content-Type: application/json
    - 여기까지 미들웨어에서 수행
 4. 메일 데이터 로드
    - 메일 ID가 일치하고 메일 수신자 ID가 요청 유저 ID와 일치하는 행을 반환
-5. (아이템이 첨부된 경우) 마스터DB에서 가져온 아이템 데이터를 추가
 
 #### 클라이언트 → 서버 전송 데이터
 
@@ -576,14 +575,6 @@ Content-Type: application/json
 ```
 {
     "mail": {
-        "itemAttribute": {
-            "code": 1,
-            "typeCode": 1,
-            "name": "벼",
-            "sellPrice": 2,
-            "buyPrice": 2,
-            "desc": "싱싱한 벼이다."
-        },
         "mailId": 144,
         "receiverId": 112,
         "senderId": 0,
@@ -610,7 +601,7 @@ Content-Type: application/json
 
 #### 설명
 
-- 클라이언트가 요청한 메일ID에 있는 아이템을 수령 처리하고 실제 지급합니다.
+- 클라이언트가 요청한 메일ID에 있는 아이템을 지급하고 수령 완료 처리합니다.
 
 #### 로직
 
@@ -618,12 +609,12 @@ Content-Type: application/json
 2. 앱 버전 및 마스터데이터 버전 검증
 3. 토큰 검증
    - 여기까지 미들웨어에서 수행
-4. 해당 메일에 아이템이나 재화가 있는지 확인 후, 수령 여부를 변경함
-   - 메일 ID, 메일 수신자 ID가 일치하는 행을 찾아 `IsReceived`를 `true` 로 Update
+4. 해당 메일에 아이템이나 재화가 있는지 확인
 5. 아이템 지급 처리
    - `user_item` 테이블에 아이템 데이터를 Insert
 6. 재화 지급 처리
    - `farm_info` 테이블의 Money값을 증가
+7. 메일 수령완료 처리
 
 #### 클라이언트 → 서버 전송 데이터
 
@@ -634,9 +625,6 @@ Content-Type: application/json
 | 앱 버전 정보          |                                  |
 | 게임 데이터 버전 정보 |                                  |
 | 메일 ID               |                                  |
-| 아이템 Code           |                                  |
-| 아이템 Count          |                                  |
-| 재화                  |                                  |
 
 #### 요청 및 응답 예시
 
@@ -644,11 +632,11 @@ Content-Type: application/json
 
 ```
 {
-    "UserID" : 96,
-    "AuthToken" : "8e3vy5bg96on2p2a59lp4iryk",
+    "UserID" : 93,
+    "AuthToken" : "l7v2v4gdazy7xw0g6rqkr7xbe",
     "AppVersion" : "0.1",
     "MasterDataVersion" : "0.1",
-    "MailID" : 102
+    "MailID" : 100
 }
 ```
 
@@ -656,34 +644,9 @@ Content-Type: application/json
 
 ```
 {
-    "mail": {
-        "itemAttribute": {
-            "code": 1,
-            "typeCode": 1,
-            "name": "벼",
-            "sellPrice": 2,
-            "buyPrice": 2,
-            "desc": "싱싱한 벼이다."
-        },
-        "itemCount": 30,
-        "mailId": 102,
-        "receiverId": 96,
-        "senderId": 0,
-        "title": "출석 보상 지급",
-        "content": "1일차 출석 보상입니다.",
-        "obtainedAt": "2023-07-21T15:06:52",
-        "expiredAt": "2023-07-28T15:06:52",
-        "isRead": false,
-        "isDeleted": false,
-        "itemId": 97,
-        "isReceived": false,
-        "money": 0
-    },
     "result": 0
 }
 ```
-
----
 
 ---
 
