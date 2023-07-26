@@ -1,10 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using ZLogger;
 
-namespace WebAPIServer.Controllers;
-
 [ApiController]
 [Route("api/mail")]
+
 public class MailController : ControllerBase
 {
     readonly ILogger<MailController> _logger;
@@ -27,7 +26,7 @@ public class MailController : ControllerBase
         (var errorCode, var mailList) = await _mailService.GetMailListByPage(request.UserID, request.Page);
         if (!Successed(errorCode))
         {
-            return new ResLoadPageDTO() { Result = ErrorCode.LoadMailsByPage_Fail_InvalidPage, MailList = null };
+            return new ResLoadPageDTO() { Result = ErrorCode.LoadMailListByPage_Fail_InvalidPage, MailList = null };
         }
 
         LogInfoOnSuccess("LoadMailListByPage", new { UserID = request.UserID, Page = request.Page });
@@ -41,23 +40,18 @@ public class MailController : ControllerBase
     [HttpPost("load")]
     public async Task<ResLoadMailDTO> LoadMail(ReqLoadMailDTO request)
     {
-        // 메일 ID에 해당하는 우편 데이터 로드
-        (var errorCode, var mail) = await _mailService.GetMailByMailId(request.UserID, request.MailID);
+        // 메일 ID에 해당하는 우편 데이터를 로드하고 읽음 처리
+        (var errorCode, var mail) = await _mailService.GetMailAndSetRead(request.UserID, request.MailID);
         if (!Successed(errorCode))
         {
-            return new ResLoadMailDTO() { Result = ErrorCode.LoadMail_Fail_MailNotExists, Mail = null };
+            _logger.ZLogDebugWithPayload(EventIdGenerator.Create(errorCode),
+                                        new { UserID = request.UserID, MailID = request.MailID },
+                                        "Failed");
+
+            return new ResLoadMailDTO() { Result = ErrorCode.LoadMail_Fail, Mail = null };
         }
 
-        // 아직 읽지 않은 메일이라면 읽음 처리
-        if (IsNotRead(mail!))
-        {
-            errorCode = await _mailService.SetMailIsRead(request.UserID, request.MailID);
-            if (!Successed(errorCode))
-            {
-                return new ResLoadMailDTO() { Result = ErrorCode.LoadMail_Fail_IsReadUpdate, Mail = null };
-            }
-        }
-
+        LogInfoOnSuccess("LoadMail", new { UserID = request.UserID, MailID = request.MailID });
         return new ResLoadMailDTO() { Result = ErrorCode.None, Mail = mail };
     }
 
@@ -75,13 +69,5 @@ public class MailController : ControllerBase
     bool Successed(ErrorCode errorCode)
     {
         return errorCode == ErrorCode.None;
-    }
-
-    /// <summary>
-    /// 읽음 처리가 된 메일인지 체크합니다.
-    /// </summary>
-    bool IsNotRead(MailWithItemDTO mail)
-    {
-        return mail.IsRead == false;
     }
 }

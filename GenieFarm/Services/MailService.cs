@@ -30,11 +30,38 @@ public class MailService : IMailService
     }
 
     /// <summary>
-    /// 요청한 MailID와 UserID가 모두 일치하는 메일 데이터를 반환합니다. <br/>
+    /// 요청한 메일ID의 메일을 읽음 처리합니다. <br/>
+    /// 읽음 처리는 읽지 않은 상태였을 때에만 수행합니다.
+    /// </summary>
+    public async Task<Tuple<ErrorCode, MailWithItemDTO?>> GetMailAndSetRead(Int64 userId, Int64 mailId)
+    {
+        // 메일 데이터 로드
+        (var getMailResult, var mail) = await GetMailByMailId(userId, mailId);
+        if (!Successed(getMailResult))
+        {
+            return new (ErrorCode.MailService_GetMailAndSetRead_MailNotExists, null);
+        }
+
+        // 읽지 않은 메일이라면 읽음 처리
+        if (NotRead(mail!))
+        {
+            var readResult = await SetReadIfNotRead(userId, mailId);
+            if (!Successed(readResult))
+            {
+                return new (ErrorCode.MailService_GetMailAndSetRead_SetRead, null);
+            }
+        }
+
+        return new (ErrorCode.None, mail);
+    }
+
+    /// <summary>
+    /// 요청한 메일ID의 메일 데이터를 반환합니다. <br/>
     /// 아이템이 첨부되어 있다면 아이템 정보도 추가합니다.
     /// </summary>
-    public async Task<Tuple<ErrorCode, MailWithItemDTO?>> GetMailByMailId(long userId, long mailId)
+    async Task<Tuple<ErrorCode, MailWithItemDTO?>> GetMailByMailId(long userId, long mailId)
     {
+        // 게임 DB에서 메일 데이터를 가져옴
         var mail = await _gameDb.GetMailByMailId(userId, mailId);
         if (!ValidateMail(mail))
         {
@@ -59,9 +86,9 @@ public class MailService : IMailService
     }
 
     /// <summary>
-    /// 요청한 MailID와 UserID가 모두 일치하는 메일을 읽음 처리합니다.
+    /// 메일을 읽음 처리합니다.
     /// </summary>
-    public async Task<ErrorCode> SetMailIsRead(Int64 userId, Int64 mailId)
+    async Task<ErrorCode> SetReadIfNotRead(Int64 userId, Int64 mailId)
     {
         var affectedRow = await _gameDb.UpdateMailIsRead(userId, mailId);
         if (!ValidateAffectedRow(affectedRow, 1))
@@ -73,6 +100,26 @@ public class MailService : IMailService
 
             return errorCode;
         }
+
+        return ErrorCode.None;
+    }
+
+    /// <summary>
+    /// 메일에 첨부되어있는 아이템 데이터를 추가합니다.
+    /// </summary>
+    async Task<ErrorCode> SetItemAttribute(MailWithItemDTO mail)
+    {
+        // 아이템 종류와 개수 정보를 가져옴
+        var itemCodeAndCount = await _gameDb.GetItemCodeAndCountByItemId(mail!.ItemId);
+        if (!ValidateItem(itemCodeAndCount))
+        {
+            return ErrorCode.MailService_SetItemAttribute_InvalidItemCodeAndCount;
+        }
+
+        // 마스터DB에서 아이템 Code에 해당하는 데이터를 가져옴
+        var itemAttribute = _masterDb._itemAttributeList!.Find(x => x.Code == itemCodeAndCount!.ItemCode);
+        mail.ItemCount = itemCodeAndCount!.ItemCount;
+        mail.ItemAttribute = itemAttribute;
 
         return ErrorCode.None;
     }
@@ -92,26 +139,6 @@ public class MailService : IMailService
     bool Successed(ErrorCode errorCode)
     {
         return errorCode == ErrorCode.None;
-    }
-
-    /// <summary>
-    /// 메일에 첨부되어있는 아이템 데이터를 추가합니다.
-    /// </summary>
-    async Task<ErrorCode> SetItemAttribute(MailWithItemDTO mail)
-    {
-        // 아이템ID로 아이템 종류와 개수 데이터를 가져옴
-        var itemCodeAndCount = await _gameDb.GetItemCodeAndCountByItemId(mail!.ItemId);
-        if (!ValidateItem(itemCodeAndCount))
-        {
-            return ErrorCode.MailService_SetItemAttribute_InvalidItemCodeAndCount;
-        }
-
-        // 마스터DB에서 아이템 Code에 해당하는 데이터를 가져옴
-        var itemAttribute = _masterDb._itemAttributeList!.Find(x => x.Code == itemCodeAndCount!.ItemCode);
-        mail.ItemCount = itemCodeAndCount!.ItemCount;
-        mail.ItemAttribute = itemAttribute;
-
-        return ErrorCode.None;
     }
 
     /// <summary>
@@ -149,5 +176,13 @@ public class MailService : IMailService
     bool HasItem(MailWithItemDTO mail)
     {
         return mail.ItemId != 0;
+    }
+
+    /// <summary>
+    /// 메일이 읽음 처리된 상태인지 체크합니다.
+    /// </summary>
+    bool NotRead(MailWithItemDTO mail)
+    {
+        return !mail.IsRead;
     }
 }

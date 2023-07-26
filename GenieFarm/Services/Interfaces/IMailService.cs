@@ -6,13 +6,8 @@
     public Task<Tuple<ErrorCode, List<MailModel>?>> GetMailListByPage(Int64 userId, Int32 page);
 
     /// <summary>
-    /// 요청한 MailID와 UserID가 모두 일치하는 메일 데이터를 반환합니다. <br/>
-    /// 아이템이 첨부되어 있다면 아이템 정보도 추가합니다.
+    /// 요청한 메일ID의 메일을 가져오고, 읽음 처리합니다. <br/>
+    /// 읽음 처리는 읽지 않은 상태였을 때에만 수행합니다.
     /// </summary>
-    public Task<Tuple<ErrorCode, MailWithItemDTO?>> GetMailByMailId(Int64 userId, Int64 mailId);
-
-    /// <summary>
-    /// 요청한 MailID와 UserID가 모두 일치하는 메일을 읽음 처리합니다.
-    /// </summary>
-    public Task<ErrorCode> SetMailIsRead(Int64 userId, Int64 mailId);
+    public Task<Tuple<ErrorCode, MailWithItemDTO?>> GetMailAndSetRead(Int64 userId, Int64 mailId);
 }
