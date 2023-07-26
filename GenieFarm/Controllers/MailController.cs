@@ -55,6 +55,28 @@ public class MailController : ControllerBase
         return new ResLoadMailDTO() { Result = ErrorCode.None, Mail = mail };
     }
 
+    ///// <summary>
+    ///// 우편 아이템 수령 API <br />
+    ///// 클라이언트가 요청한 메일ID의 아이템 및 재화를 지급하고, <br />
+    ///// 해당 우편의 지급 완료여부를 true로 처리합니다.
+    ///// </summary>
+    //[HttpPost("receiveItem")]
+    //public async Task<ResReceiveItemDTO> ReceiveMailitem(ReqReceiveItemDTO request)
+    //{
+    //    // 메일 ID에 해당하는 우편을 수령 완료 처리 및 아이템 지급
+    //    var errorCode = await _mailService.ReceiveMailItem(request.UserID, request.MailID);
+    //    if (!Successed(errorCode))
+    //    {
+    //        _logger.ZLogDebugWithPayload(EventIdGenerator.Create(errorCode),
+    //                                     new { UserID = request.UserID, MailID = request.MailID }, "Failed");
+
+    //        return new ResReceiveItemDTO() { Result = ErrorCode.ReceiveMailItem_Fail };
+    //    }
+
+    //    LogInfoOnSuccess("ReceiveMailItem", new { UserID = request.UserID, MailID = request.MailID });
+    //    return new ResReceiveItemDTO() { Result = ErrorCode.None };
+    //}
+
     /// <summary>
     /// 성공한 API 요청에 대해 통계용 로그를 남깁니다.
     /// </summary>

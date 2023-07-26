@@ -604,6 +604,89 @@ Content-Type: application/json
 
 ---
 
+## 우편 아이템 수령
+
+(MailController.ReceiveMailItem)
+
+#### 설명
+
+- 클라이언트가 요청한 메일ID에 있는 아이템을 수령 처리하고 실제 지급합니다.
+
+#### 로직
+
+1. 로그인한 클라이언트가 메일ID와 함께 개별 우편 아이템 수령 요청
+2. 앱 버전 및 마스터데이터 버전 검증
+3. 토큰 검증
+   - 여기까지 미들웨어에서 수행
+4. 해당 메일에 아이템이나 재화가 있는지 확인 후, 수령 여부를 변경함
+   - 메일 ID, 메일 수신자 ID가 일치하는 행을 찾아 `IsReceived`를 `true` 로 Update
+5. 아이템 지급 처리
+   - `user_item` 테이블에 아이템 데이터를 Insert
+6. 재화 지급 처리
+   - `farm_info` 테이블의 Money값을 증가
+
+#### 클라이언트 → 서버 전송 데이터
+
+| 종류                  | 설명                             |
+| --------------------- | -------------------------------- |
+| User ID               | 로그인 시에 게임 서버로부터 받음 |
+| 인증 토큰             | 로그인 시에 게임 서버로부터 받음 |
+| 앱 버전 정보          |                                  |
+| 게임 데이터 버전 정보 |                                  |
+| 메일 ID               |                                  |
+| 아이템 Code           |                                  |
+| 아이템 Count          |                                  |
+| 재화                  |                                  |
+
+#### 요청 및 응답 예시
+
+- 요청 예시
+
+```
+{
+    "UserID" : 96,
+    "AuthToken" : "8e3vy5bg96on2p2a59lp4iryk",
+    "AppVersion" : "0.1",
+    "MasterDataVersion" : "0.1",
+    "MailID" : 102
+}
+```
+
+- 응답 예시
+
+```
+{
+    "mail": {
+        "itemAttribute": {
+            "code": 1,
+            "typeCode": 1,
+            "name": "벼",
+            "sellPrice": 2,
+            "buyPrice": 2,
+            "desc": "싱싱한 벼이다."
+        },
+        "itemCount": 30,
+        "mailId": 102,
+        "receiverId": 96,
+        "senderId": 0,
+        "title": "출석 보상 지급",
+        "content": "1일차 출석 보상입니다.",
+        "obtainedAt": "2023-07-21T15:06:52",
+        "expiredAt": "2023-07-28T15:06:52",
+        "isRead": false,
+        "isDeleted": false,
+        "itemId": 97,
+        "isReceived": false,
+        "money": 0
+    },
+    "result": 0
+}
+```
+
+---
+
+---
+
 ## 우편
 
 우편 탭을 기능별로 구분하여 사용한다.

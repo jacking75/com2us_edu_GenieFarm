@@ -33,7 +33,7 @@ public class MailService : IMailService
     /// 요청한 메일ID의 메일을 읽음 처리합니다. <br/>
     /// 읽음 처리는 읽지 않은 상태였을 때에만 수행합니다.
     /// </summary>
-    public async Task<Tuple<ErrorCode, MailWithItemDTO?>> GetMailAndSetRead(Int64 userId, Int64 mailId)
+    public async Task<Tuple<ErrorCode, MailModel?>> GetMailAndSetRead(Int64 userId, Int64 mailId)
     {
         // 메일 데이터 로드
         (var getMailResult, var mail) = await GetMailByMailId(userId, mailId);
@@ -59,26 +59,13 @@ public class MailService : IMailService
     /// 요청한 메일ID의 메일 데이터를 반환합니다. <br/>
     /// 아이템이 첨부되어 있다면 아이템 정보도 추가합니다.
     /// </summary>
-    async Task<Tuple<ErrorCode, MailWithItemDTO?>> GetMailByMailId(long userId, long mailId)
+    async Task<Tuple<ErrorCode, MailModel?>> GetMailByMailId(long userId, long mailId)
     {
         // 게임 DB에서 메일 데이터를 가져옴
         var mail = await _gameDb.GetMailByMailId(userId, mailId);
         if (!ValidateMail(mail))
         {
             return new (ErrorCode.MailService_MailNotExists, null);
-        }
-
-        // 아이템이 첨부되어 있으면 아이템 정보 추가
-        if (HasItem(mail!))
-        {
-            var errorCode = SetItemAttribute(mail!);
-            if (!Successed(errorCode))
-            {
-                _logger.ZLogDebugWithPayload(EventIdGenerator.Create(errorCode),
-                                             new { UserID = userId, MailID = mailId }, "Failed");
-
-                return new (ErrorCode.MailService_GetMailByMailId_SetItemAttribute, null);
-            }
         }
 
         return new (ErrorCode.None, mail);
@@ -101,31 +88,6 @@ public class MailService : IMailService
         }
 
         return ErrorCode.None;
-    }
-
-    /// <summary>
-    /// 메일에 첨부되어있는 아이템 데이터를 추가합니다.
-    /// </summary>
-    ErrorCode SetItemAttribute(MailWithItemDTO mail)
-    {
-        try
-        {
-            // 마스터DB에서 아이템 Code에 해당하는 데이터를 가져옴
-            var itemAttribute = _masterDb._itemAttributeList!.Find(x => x.Code == mail.ItemCode);
-            mail.ItemAttribute = itemAttribute;
-
-            return ErrorCode.None;
-        }
-        catch (Exception ex)
-        {
-            var errorCode = ErrorCode.MailService_SetItemAttribute_InvalidItemCode;
-
-            _logger.ZLogDebugWithPayload(EventIdGenerator.Create(errorCode), ex,
-                                         new { Mail = mail }, "Failed");
-
-            return errorCode;
-        }
-
     }
 
     /// <summary>
@@ -154,41 +116,17 @@ public class MailService : IMailService
     }
 
     /// <summary>
-    /// 아이템 데이터가 유효한지 확인합니다.
-    /// </summary>
-    bool ValidateItem(UserItemModel? itemData)
-    {
-        if (itemData == null || itemData.ItemCode == 0 || itemData.ItemCount == 0)
-        {
-            return false;
-        }
-
-        return true;
-    }
-
-    /// <summary>
     /// 메일이 존재하는지 체크합니다.
     /// </summary>
-    bool ValidateMail(MailWithItemDTO? mail)
+    bool ValidateMail(MailModel? mail)
     {
-        _logger.ZLogDebugWithPayload(EventIdGenerator.Create(65535, "TestFirstOrDefaultForReference"),
-            new { MailNotExists = mail == null }, "Test");
-
-        return mail != null;
-    }
-
-    /// <summary>
-    /// 아이템이 첨부된 메일인지 체크합니다.
-    /// </summary>
-    bool HasItem(MailWithItemDTO mail)
-    {
-        return mail.ItemCode != 0;
+        return mail != null && mail.MailId > 0;
     }
 
     /// <summary>
     /// 메일이 읽음 처리된 상태인지 체크합니다.
     /// </summary>
-    bool NotRead(MailWithItemDTO mail)
+    bool NotRead(MailModel mail)
     {
         return !mail.IsRead;
     }

@@ -74,6 +74,7 @@ public enum ErrorCode : UInt16
     MailService_GetMailAndSetRead_MailNotExists,
     MailService_GetMailAndSetRead_SetRead,
     MailService_SetItemAttribute_InvalidItemCode,
+    MailService_ReceiveMailItem_SetReceive,
 
 
     // API
@@ -106,4 +107,5 @@ public enum ErrorCode : UInt16
     /* MailController */
     LoadMailListByPage_Fail_InvalidPage,
     LoadMail_Fail,
+    ReceiveMailItem_Fail,
 }
