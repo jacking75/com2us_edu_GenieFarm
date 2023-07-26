@@ -21,7 +21,7 @@ Content-Type: application/json
 }
 
 ### 게임 기본 데이터 로드
-POST http://localhost:11500/api/load/defaultdata
+POST http://localhost:11500/api/load/defaultData
 Content-Type: application/json
 
 {
@@ -51,4 +51,51 @@ Content-Type: application/json
     "AuthToken" : "8fzg1yu71r8g3u77mbe4rj7tv",
     "AppVersion" : "0.1",
     "MasterDataVersion" : "0.1"
+}
+
+### 출석 정보 조회
+POST http://localhost:11500/api/load/attendData
+Content-Type: application/json
+
+{
+    "UserID" : 93,
+    "AuthToken" : "l7v2v4gdazy7xw0g6rqkr7xbe",
+    "AppVersion" : "0.1",
+    "MasterDataVersion" : "0.1"
+}
+
+### 우편함 페이지 별 조회
+POST http://localhost:11500/api/mail/loadByPage
+Content-Type: application/json
+
+{
+    "UserID" : 99,
+    "AuthToken" : "4dv6vvyg5wusvt1cak5jx18dq",
+    "AppVersion" : "0.1",
+    "MasterDataVersion" : "0.1",
+    "Page" : 1
+}
+
+### 개별 우편 조회
+POST http://localhost:11500/api/mail/load
+Content-Type: application/json
+
+{
+    "UserID" : 93,
+    "AuthToken" : "l7v2v4gdazy7xw0g6rqkr7xbe",
+    "AppVersion" : "0.1",
+    "MasterDataVersion" : "0.1",
+    "MailID" : 100
+}
+
+### 우편 아이템 수령
+POST http://localhost:11500/api/mail/receiveItem
+Content-Type: application/json
+
+{
+    "UserID" : 93,
+    "AuthToken" : "l7v2v4gdazy7xw0g6rqkr7xbe",
+    "AppVersion" : "0.1",
+    "MasterDataVersion" : "0.1",
+    "MailID" : 100
 }
