@@ -203,14 +203,6 @@ public class AttendanceService : IAttendanceService
     }
 
     /// <summary>
-    /// 아이템 코드 유효성을 검사합니다.
-    /// </summary>
-    bool ValidateItemCode(Int64 itemCode)
-    {
-        return itemCode != 0;
-    }
-
-    /// <summary>
     /// 유저ID를 이용해 월간 구독 이용권 만료일을 조회하고, <br/>
     /// 이용권이 유효하면 true를 반환한다.
     /// </summary>
