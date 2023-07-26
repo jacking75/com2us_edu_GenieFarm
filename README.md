@@ -531,7 +531,7 @@ Content-Type: application/json
 
 #### 로직
 
-1. 로그인한 클라이언트가 페이지 번호와 함께 우편함 페이지 별 조회 요청
+1. 로그인한 클라이언트가 메일ID와 함께 개별 우편 조회 요청
 2. 앱 버전 및 마스터데이터 버전 검증
 3. 토큰 검증
    - 여기까지 미들웨어에서 수행
@@ -554,13 +554,44 @@ Content-Type: application/json
 - 요청 예시
 
 ```
-req
+{
+    "UserID" : 96,
+    "AuthToken" : "8e3vy5bg96on2p2a59lp4iryk",
+    "AppVersion" : "0.1",
+    "MasterDataVersion" : "0.1",
+    "MailID" : 102
+}
 ```
 
 - 응답 예시
 
 ```
-res
+{
+    "mail": {
+        "itemAttribute": {
+            "code": 1,
+            "typeCode": 1,
+            "name": "벼",
+            "sellPrice": 2,
+            "buyPrice": 2,
+            "desc": "싱싱한 벼이다."
+        },
+        "itemCount": 30,
+        "mailId": 102,
+        "receiverId": 96,
+        "senderId": 0,
+        "title": "출석 보상 지급",
+        "content": "1일차 출석 보상입니다.",
+        "obtainedAt": "2023-07-21T15:06:52",
+        "expiredAt": "2023-07-28T15:06:52",
+        "isRead": false,
+        "isDeleted": false,
+        "itemId": 97,
+        "isReceived": false,
+        "money": 0
+    },
+    "result": 0
+}
 ```
 
 ---
