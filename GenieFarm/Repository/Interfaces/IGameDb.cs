@@ -30,4 +30,7 @@ public interface IGameDb
     public Task<MailModel?> GetMailByMailId(Int64 userId, Int64 mailId);
     public Task<Int32> UpdateMailIsRead(Int64 userId, Int64 mailId);
     public Task<MailModel?> GetMailByMailIdIfHasReward(Int64 userId, Int64 mailId);
+    public Task<Int64> InsertGetIdRewardItem(Int64 userId, Int64 itemCode, Int16 itemCount);
+    public Task<Int32> IncreaseUserMoney(Int64 userId, Int32 money);
+    public Task<Int32> SetMailReceived(Int64 userId, Int64 mailId);
 }

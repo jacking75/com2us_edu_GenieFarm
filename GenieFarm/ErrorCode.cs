@@ -74,7 +74,16 @@ public enum ErrorCode : UInt16
     MailService_GetMailAndSetRead_MailNotExists,
     MailService_GetMailAndSetRead_SetRead,
     MailService_SetItemAttribute_InvalidItemCode,
-    MailService_ReceiveMailItem_SetReceive,
+    MailService_ReceiveMailItem_MailNotExists,
+    MailService_ReceiveMailItem_SetReceived,
+    MailService_InsertRewardItem_InvalidItemId,
+    MailService_InsertRewardItem_Exception,
+    MailService_IncreaseUserMoney_Fail,
+    MailService_IncreaseUserMoney_Exception,
+    MailService_SetReceived_Fail,
+    MailService_SetReceived_Exception,
+    MailService_ReceiveMailItem_GiveReward_Fail,
+
 
 
     // API

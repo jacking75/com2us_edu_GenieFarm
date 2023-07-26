@@ -32,5 +32,5 @@ public class MailModel
 
     public Int16 ItemCount { get; set; }
 
-    public Int64 Money { get; set; }
+    public Int32 Money { get; set; }
 }

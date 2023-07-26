@@ -46,8 +46,32 @@ public partial class GameDb : IGameDb
     {
         return (await _queryFactory.Query("mail_info")
                                    .Where("MailId", mailId)
+                                   .Where("IsReceived", false)
                                    .Where(q => q.Where("ItemCode", ">", 0).OrWhere("Money", ">", 0))
                                    .GetAsync<MailModel>())
                                    .FirstOrDefault();
+    }
+
+    public async Task<Int64> InsertGetIdRewardItem(Int64 userId, Int64 itemCode, Int16 itemCount)
+    {
+        return await _queryFactory.Query("user_item")
+                                  .InsertGetIdAsync<Int64>(new { UserId = userId, 
+                                                                 ItemCode = itemCode,
+                                                                 ItemCount = itemCount });
+    }
+
+    public async Task<Int32> IncreaseUserMoney(Int64 userId, Int32 money)
+    {
+        return await _queryFactory.Query("farm_info")
+                                  .Where("UserId", userId)
+                                  .IncrementAsync("Money", money);
+    }
+
+    public async Task<Int32> SetMailReceived(Int64 userId, Int64 mailId)
+    {
+        return await _queryFactory.Query("mail_info")
+                                  .Where("ReceiverId", userId)
+                                  .Where("MailId", mailId)
+                                  .UpdateAsync(new { IsReceived = true });
     }
 }
