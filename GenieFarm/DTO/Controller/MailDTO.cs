@@ -14,7 +14,6 @@ public class ResLoadPageDTO : ErrorCodeDTO
 public class MailWithItemDTO : MailModel
 {
     public ItemAttributeModel? ItemAttribute { get; set; }
-    public Int16 ItemCount { get; set; }
 }
 
 

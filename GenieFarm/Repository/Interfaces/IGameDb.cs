@@ -22,13 +22,11 @@ public interface IGameDb
     public Task<AttendanceModel?> GetDefaultAttendDataByUserId(Int64 userId);
     public Task<DateTime?> GetPassEndDateByUserId(Int64 userId);
     public Task<Int32> UpdateAttendanceData(Int64 userId, Int32 newAttendanceCount);
-    public Task<Int64> InsertGetIdNewItem(Int64 itemCode, Int16 itemCount);
     public Task<Int32> InsertAttendanceRewardMail(Int64 userId, MailModel mail);
 
 
     // GameDb_Mail.cs
     public Task<List<MailModel>> GetMailListByPage(Int64 userId, Int32 page);
     public Task<MailWithItemDTO?> GetMailByMailId(Int64 userId, Int64 mailId);
-    public Task<FarmItemModel?> GetItemCodeAndCountByItemId(Int64 itemId);
     public Task<Int32> UpdateMailIsRead(Int64 userId, Int64 mailId);
 }

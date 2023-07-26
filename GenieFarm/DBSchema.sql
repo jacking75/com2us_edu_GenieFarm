@@ -42,11 +42,11 @@ COLLATE = utf8mb4_0900_ai_ci;
 
 
 -- -----------------------------------------------------
--- Table `farm_db`.`farm_item`
+-- Table `farm_db`.`user_item`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `farm_db`.`farm_item` (
+CREATE TABLE IF NOT EXISTS `farm_db`.`user_item` (
   `ItemId` BIGINT NOT NULL AUTO_INCREMENT,
-  `OwnerId` BIGINT NOT NULL,
+  `UserId` BIGINT NOT NULL,
   `ItemCode` BIGINT NOT NULL,
   `ItemCount` SMALLINT NOT NULL DEFAULT '1',
   PRIMARY KEY (`ItemId`))
@@ -54,6 +54,8 @@ ENGINE = InnoDB
 AUTO_INCREMENT = 15
 DEFAULT CHARACTER SET = utf8mb4
 COLLATE = utf8mb4_0900_ai_ci;
+
+-- 소유함으로써 변하는 부분이 있다면 추가되어야 한다.
 
 
 -- -----------------------------------------------------
@@ -69,7 +71,8 @@ CREATE TABLE IF NOT EXISTS `farm_db`.`mail_info` (
   `ExpiredAt` DATETIME NOT NULL,
   `IsRead` TINYINT NOT NULL DEFAULT '0',
   `IsDeleted` TINYINT NOT NULL DEFAULT '0',
-  `ItemId` BIGINT NOT NULL,
+  `ItemCode` BIGINT NOT NULL,
+  `ItemCount` SMALLINT NOT NULL,
   `IsReceived` TINYINT NOT NULL DEFAULT '0',
   `Money` BIGINT NULL DEFAULT NULL,
   PRIMARY KEY (`MailId`))

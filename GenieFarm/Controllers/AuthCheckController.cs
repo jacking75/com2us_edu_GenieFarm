@@ -50,6 +50,13 @@ public class AuthCheckController : ControllerBase
             _logger.ZLogDebugWithPayload(EventIdGenerator.Create(errorCode),
                                          new { PlayerID = request.PlayerID,
                                                Nickname = request.Nickname }, "Failed");
+
+            // 중복 닉네임의 경우 클라이언트에게 실패 이유 전달
+            if (errorCode == ErrorCode.AuthCheckService_CreateDefaultGameData_DuplicatedNickname)
+            {
+                return new ResCreateDTO() {  Result = ErrorCode.Create_Fail_DuplicatedNickname };
+            }
+
             return new ResCreateDTO() { Result = ErrorCode.Create_Fail_CreateDefaultDataFailed };
         }
 

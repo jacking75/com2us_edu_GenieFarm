@@ -53,13 +53,11 @@ public enum ErrorCode : UInt16
     AttendanceService_UpdateAttendanceData_AffectedRowOutOfRange,
     AttendanceService_UpdateAttendanceData_Fail,
     AttendanceService_UpdateAttendanceData,
-    AttendanceService_SendAttendanceReward,
-    AttendanceService_SendAttendanceReward_CreateItem,
-    AttendanceService_SendAttendanceReward_SendRewardIntoMail,
     AttendanceService_CreateItem_Fail,
     AttendanceService_SendRewardIntoMail,
     AttendanceService_SendRewardIntoMail_InsertedRowOutOfRange,
     AttendanceService_SendRewardIntoMail_Fail,
+    AttendanceService_SendAttendanceReward,
 
     /* LoadDataService */
     LoadDataService_GetDefaultGameDataByUserId_UserData,
@@ -75,6 +73,7 @@ public enum ErrorCode : UInt16
     MailService_UpdateMailIsRead,
     MailService_GetMailAndSetRead_MailNotExists,
     MailService_GetMailAndSetRead_SetRead,
+    MailService_SetItemAttribute_InvalidItemCode,
 
 
     // API
@@ -87,6 +86,7 @@ public enum ErrorCode : UInt16
     /* AuthCheckController */
     Create_Fail_UserAlreadyExists,
     Create_Fail_CreateDefaultDataFailed,
+    Create_Fail_DuplicatedNickname,
     Login_Fail_HiveAuthCheck,
     Login_Fail_UpdateLastLogin,
     Login_Fail_TokenSetting,

@@ -1,8 +1,8 @@
-﻿public class FarmItemModel
+﻿public class UserItemModel
 {
     public Int64 ItemID { get; set; }
 
-    public Int64 OwnerID { get; set; }
+    public Int64 UserID { get; set; }
 
     public Int64 ItemCode { get; set; }
 

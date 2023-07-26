@@ -71,12 +71,11 @@ public class MailService : IMailService
         // 아이템이 첨부되어 있으면 아이템 정보 추가
         if (HasItem(mail!))
         {
-            var errorCode = await SetItemAttribute(mail!);
+            var errorCode = SetItemAttribute(mail!);
             if (!Successed(errorCode))
             {
                 _logger.ZLogDebugWithPayload(EventIdGenerator.Create(errorCode),
-                                             new { UserID = userId, MailID = mailId,
-                                                   ItemID = mail!.ItemId }, "Failed");
+                                             new { UserID = userId, MailID = mailId }, "Failed");
 
                 return new (ErrorCode.MailService_GetMailByMailId_SetItemAttribute, null);
             }
@@ -107,21 +106,26 @@ public class MailService : IMailService
     /// <summary>
     /// 메일에 첨부되어있는 아이템 데이터를 추가합니다.
     /// </summary>
-    async Task<ErrorCode> SetItemAttribute(MailWithItemDTO mail)
+    ErrorCode SetItemAttribute(MailWithItemDTO mail)
     {
-        // 아이템 종류와 개수 정보를 가져옴
-        var itemCodeAndCount = await _gameDb.GetItemCodeAndCountByItemId(mail!.ItemId);
-        if (!ValidateItem(itemCodeAndCount))
+        try
         {
-            return ErrorCode.MailService_SetItemAttribute_InvalidItemCodeAndCount;
+            // 마스터DB에서 아이템 Code에 해당하는 데이터를 가져옴
+            var itemAttribute = _masterDb._itemAttributeList!.Find(x => x.Code == mail.ItemCode);
+            mail.ItemAttribute = itemAttribute;
+
+            return ErrorCode.None;
+        }
+        catch (Exception ex)
+        {
+            var errorCode = ErrorCode.MailService_SetItemAttribute_InvalidItemCode;
+
+            _logger.ZLogDebugWithPayload(EventIdGenerator.Create(errorCode), ex,
+                                         new { Mail = mail }, "Failed");
+
+            return errorCode;
         }
 
-        // 마스터DB에서 아이템 Code에 해당하는 데이터를 가져옴
-        var itemAttribute = _masterDb._itemAttributeList!.Find(x => x.Code == itemCodeAndCount!.ItemCode);
-        mail.ItemCount = itemCodeAndCount!.ItemCount;
-        mail.ItemAttribute = itemAttribute;
-
-        return ErrorCode.None;
     }
 
     /// <summary>
@@ -152,7 +156,7 @@ public class MailService : IMailService
     /// <summary>
     /// 아이템 데이터가 유효한지 확인합니다.
     /// </summary>
-    bool ValidateItem(FarmItemModel? itemData)
+    bool ValidateItem(UserItemModel? itemData)
     {
         if (itemData == null || itemData.ItemCode == 0 || itemData.ItemCount == 0)
         {
@@ -167,6 +171,9 @@ public class MailService : IMailService
     /// </summary>
     bool ValidateMail(MailWithItemDTO? mail)
     {
+        _logger.ZLogDebugWithPayload(EventIdGenerator.Create(65535, "TestFirstOrDefaultForReference"),
+            new { MailNotExists = mail == null }, "Test");
+
         return mail != null;
     }
 
@@ -175,7 +182,7 @@ public class MailService : IMailService
     /// </summary>
     bool HasItem(MailWithItemDTO mail)
     {
-        return mail.ItemId != 0;
+        return mail.ItemCode != 0;
     }
 
     /// <summary>

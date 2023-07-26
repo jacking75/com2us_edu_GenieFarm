@@ -111,8 +111,8 @@ public partial class GameDb : IGameDb
         var insertedRow = 0;
         foreach (var item in _masterDb._defaultFarmItemList!)
         {
-            insertedRow += await _queryFactory.Query("farm_item")
-                                              .InsertAsync(new { OwnerId = userId,
+            insertedRow += await _queryFactory.Query("user_item")
+                                              .InsertAsync(new { UserId = userId,
                                                                  ItemCode = item.Code,
                                                                  ItemCount = item.Count });
         }
