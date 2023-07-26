@@ -62,8 +62,8 @@ public class AttendanceService : IAttendanceService
             return ErrorCode.AttendanceService_UpdateAttendanceData;
         }
 
-        // 보상 아이템 생성 및 우편으로 지급
-        var rewardResult = await CreateRewardItemAndSend(userId, newAttendCount, usingPass, rollbackQueries);
+        // 보상 아이템 우편으로 지급
+        var rewardResult = await SendRewardMail(userId, newAttendCount, usingPass, rollbackQueries);
         if (!Successed(rewardResult))
         {
             await Rollback(rewardResult, rollbackQueries);
@@ -117,34 +117,34 @@ public class AttendanceService : IAttendanceService
     /// 보상 데이터를 로드하고, 아이템을 생성해서 <br/>
     /// 우편으로 지급합니다.
     /// </summary>
-    async Task<ErrorCode> CreateRewardItemAndSend(Int64 userId, Int32 newAttendCount, bool usingPass, List<SqlKata.Query> queries)
+    async Task<ErrorCode> SendRewardMail(Int64 userId, Int32 newAttendCount, bool usingPass, List<SqlKata.Query> queries)
     {
         // 이번 출석에 대한 보상 데이터 로드
         var reward = GetAttendanceReward(newAttendCount, usingPass);
 
-        // 보상이 아이템이라면, 생성 후 아이템 ID 가져옴
-        // 아이템이 아니라면 itemId는 0
-        (var createResult, var itemId) = await CreateItemAndGetId(reward.ItemCode, reward.Count, queries);
-        if (!Successed(createResult))
+        // 보상 메일 데이터 생성
+        var mail = GenerateRewardMail(userId, newAttendCount, reward);
+
+        try
         {
-            _logger.ZLogDebugWithPayload(EventIdGenerator.Create(createResult),
-                                        new { UserID = userId, Reward = reward }, "Failed");
+            // 메일 발송 처리
+            var insertedRow = await _gameDb.InsertAttendanceRewardMail(userId, mail);
+            if (!ValidateAffectedRow(insertedRow, 1))
+            {
+                return ErrorCode.AttendanceService_SendRewardIntoMail_InsertedRowOutOfRange;
+            }
 
-            return ErrorCode.AttendanceService_SendAttendanceReward_CreateItem;
+            return ErrorCode.None;
         }
-
-        // 우편함으로 출석 보상 지급
-        var sendResult = await SendRewardIntoMail(userId, newAttendCount, itemId, reward.Money);
-        if (!Successed(sendResult))
+        catch (Exception ex)
         {
-            _logger.ZLogDebugWithPayload(EventIdGenerator.Create(sendResult),
-                                         new { UserId = userId, NewAttendanceCount = newAttendCount },
-                                         "Failed");
+            var errorCode = ErrorCode.AttendanceService_SendRewardIntoMail_Fail;
 
-            return ErrorCode.AttendanceService_SendAttendanceReward_SendRewardIntoMail;
+            _logger.ZLogDebugWithPayload(EventIdGenerator.Create(errorCode), ex,
+                                         new { UserID = userId, Reward = reward }, "Failed");
+
+            return errorCode;
         }
-
-        return ErrorCode.None;
     }
 
     /// <summary>
@@ -167,81 +167,15 @@ public class AttendanceService : IAttendanceService
     }
 
     /// <summary>
-    /// 아이템을 생성하고, 생성된 아이템 ID를 반환합니다.
-    /// </summary>
-    async Task<Tuple<ErrorCode, Int64>> CreateItemAndGetId(Int64 itemCode, Int16 itemCount, List<SqlKata.Query> queries)
-    {
-        // 보상이 아이템이 아닌 경우
-        if (!ValidateItemCode(itemCode))
-        {
-            return new (ErrorCode.None, 0);
-        }
-
-        try
-        {
-            // DB에 아이템 생성 후 아이템 ID 가져옴
-            var itemId = await _gameDb.InsertGetIdNewItem(itemCode, itemCount);
-
-            // 생성된 아이템에 대한 롤백 쿼리 추가
-            var query = _gameDb.GetQuery("farm_item")
-                               .Where("ItemId", itemId)
-                               .AsDelete();
-            queries.Add(query);
-
-            return new (ErrorCode.None, itemId);
-        }
-        catch (Exception ex)
-        {
-            var errorCode = ErrorCode.AttendanceService_CreateItem_Fail;
-
-            _logger.ZLogDebugWithPayload(EventIdGenerator.Create(errorCode), ex,
-                                         new { ItemCode = itemCode, ItemCount = itemCount }, "Failed");
-
-            return new (errorCode, 0);
-        }
-    }
-
-    /// <summary>
-    /// 보상 아이템 혹은 재화를 첨부한 우편을 발송합니다.
-    /// </summary>
-    async Task<ErrorCode> SendRewardIntoMail(Int64 userId, Int32 newAttendCount, Int64 itemId, Int64 money)
-    {
-        // 메일 생성
-        var mail = GenerateRewardMail(userId, newAttendCount, itemId, money);
-
-        try
-        {
-            // 메일 발송 처리
-            var insertedRow = await _gameDb.InsertAttendanceRewardMail(userId, mail);
-            if (!ValidateAffectedRow(insertedRow, 1))
-            {
-                return ErrorCode.AttendanceService_SendRewardIntoMail_InsertedRowOutOfRange;
-            }
-
-            return ErrorCode.None;
-        }
-        catch (Exception ex)
-        {
-            var errorCode = ErrorCode.AttendanceService_SendRewardIntoMail_Fail;
-
-            _logger.ZLogDebugWithPayload(EventIdGenerator.Create(errorCode), ex,
-                                         new { UserID = userId, ItemID = itemId, Money = money }, "Failed");
-
-            return errorCode;
-        }
-    }
-
-    /// <summary>
     /// 보상 지급 메일(MailModel)을 생성합니다.
     /// </summary>
-    MailModel GenerateRewardMail(Int64 receiver, Int32 attendCount, Int64 rewardItemId, Int64 rewardMoney)
+    MailModel GenerateRewardMail(Int64 receiver, Int32 attendCount, AttendanceRewardModel reward)
     {
         return AttendanceRewardMailGenerator.Create(receiverId: receiver,
                                                     senderId: _masterDb._definedValueDictionary!["AttendReward_SenderId"],
                                                     attendanceCount: attendCount,
                                                     expiry: _masterDb._definedValueDictionary!["AttendReward_Expiry"],
-                                                    itemId: rewardItemId,
-                                                    money: rewardMoney);
+                                                    reward: reward);
     }
 
     /// <summary>
