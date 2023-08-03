@@ -84,6 +84,26 @@ public enum ErrorCode : UInt16
     MailService_SetReceived_Exception,
     MailService_ReceiveMailItem_GiveReward_Fail,
 
+    /* AuctionService */
+
+    AuctionService_GetItemListByPage_InvalidRequest,
+    AuctionService_GetItemListByPage_EmptyItemList,
+    AuctionService_GetItemListByPageFromTypeCode_InvalidTypeCode,
+    AuctionService_GetItemListByPageFromItemName_InvalidItemName,
+    AuctionService_GetItemListByPageFromTypeCode_Exception,
+    AuctionService_GetItemListByPageFromItemName_Exception,
+    AuctionService_CheckAndUpdateUserMoneyForBidPrice_NotEnoughMoney,
+    AuctionService_GetAUctionPriceInfo_InvalidAuctionId,
+    AuctionService_GetAuctionPriceInfo_LowBidPrice,
+    AuctionService_GetAuctionPriceInfo_HighBidPrice,
+    AuctionService_GetAuctionBuyNowPrice_InvalidAuctionId,
+    AuctionService_GetAuctionItem_InvalidAuctionId,
+    AuctionService_UpdateAuctionItemBidInfo_Fail,
+    AuctionService_UpdateAuctionItemPurchased_Fail,
+    AuctionService_InsertAuctionItemToUser_Fail,
+    AuctionService_RegisterAuction_InvalidItemId,
+    AuctionService_RegisterUserItemToAuction_InvalidItemCode,
+    AuctionService_RegisterUserItemToAuction_Fail,
 
 
     // API

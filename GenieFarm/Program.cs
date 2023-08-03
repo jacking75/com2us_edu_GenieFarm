@@ -10,13 +10,15 @@ builder.Services.AddTransient<IAuthCheckService, AuthCheckService>();
 builder.Services.AddTransient<ILoadDataService, LoadDataService>();
 builder.Services.AddTransient<IAttendanceService, AttendanceService>();
 builder.Services.AddTransient<IMailService, MailService>();
+builder.Services.AddTransient<IAuctionService, AuctionService>();
+
 builder.Services.AddSingleton<IRedisDb, RedisDb>();
 builder.Services.AddSingleton<IMasterDb, MasterDb>();
 
 
 builder.Services.AddControllers();
 
-// ZLogger »ç¿ë ¼³Á¤
+// ZLogger ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 builder.Logging.ClearProviders();
 builder.Logging.SetMinimumLevel(LogLevel.Debug);
 builder.Logging.AddZLoggerConsole(options =>
@@ -31,11 +33,11 @@ if (!await app.Services.GetService<IMasterDb>()!.Init())
     return;
 }
 
-// JSON Æ÷¸Ë °Ë»ç, ÇÊ¿äÇÑ Request Field°¡ ÀÖ´ÂÁö °Ë»ç ÈÄ Request Header¿¡ ºÙ¿©ÁÜ
+// JSON ï¿½ï¿½ï¿½ï¿½ ï¿½Ë»ï¿½, ï¿½Ê¿ï¿½ï¿½ï¿½ Request Fieldï¿½ï¿½ ï¿½Ö´ï¿½ï¿½ï¿½ ï¿½Ë»ï¿½ ï¿½ï¿½ Request Headerï¿½ï¿½ ï¿½Ù¿ï¿½ï¿½ï¿½
 app.UseJsonFieldCheckMiddleware();
-// ¹öÀü À¯È¿¼º Ã¼Å©
+// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È¿ï¿½ï¿½ Ã¼Å©
 app.UseVersionCheckMiddleware();
-// Token À¯È¿¼º Ã¼Å©, Create¿Í Login API¿¡¸¸ µ¿ÀÛÇÑ´Ù.
+// Token ï¿½ï¿½È¿ï¿½ï¿½ Ã¼Å©, Createï¿½ï¿½ Login APIï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
 app.UseAuthCheckMiddleware();
 app.UseRouting();
 app.MapControllers();
