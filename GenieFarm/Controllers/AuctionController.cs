@@ -16,12 +16,12 @@ public class AuctionController : ControllerBase
 
     /// <summary>
     /// 경매장 페이지 별 조회 API <br/>
-    /// 클라이언트가 요청한 페이지 및 아이템 카테고리에 해당하는 경매장 물품 리스트를 반환합니다.
+    /// 클라이언트가 요청한 페이지 및 아이템 카테고리에 해당하는 경매 물품 리스트를 반환합니다.
     /// </summary>
     [HttpPost("loadByPageFromTypeCode")]
-    public async Task<ResLoadAuctionPageDTO> LoadItemListByPageFromTypeCode(ReqLoadAuctionPageDTO request)
+    public async Task<ResLoadAuctionPageDTO> LoadAuctionListByPageFromTypeCode(ReqLoadAuctionPageDTO request)
     {
-        (var errorCode, var itemList) = await _auctionService.GetItemListByPageFromTypeCode(request.Page, request.TypeCode, request.MinPrice, request.MaxPrice, request.SortBy, request.SortOrder);
+        (var errorCode, var itemList) = await _auctionService.GetAuctionListByPageFromTypeCode(request.Page, request.TypeCode, request.MinPrice, request.MaxPrice, request.SortBy, request.SortOrder);
 
         return new ResLoadAuctionPageDTO() { Result = errorCode, ItemList = itemList };
 
@@ -29,25 +29,27 @@ public class AuctionController : ControllerBase
 
     /// <summary>
     /// 경매장 페이지 별 조회 API <br/>
-    /// 클라이언트가 요청한 페이지 및 아이템 이름에 해당하는 경매장 물품 리스트를 반환합니다.
+    /// 클라이언트가 요청한 페이지 및 아이템 이름에 해당하는 경매 물품 리스트를 반환합니다.
     /// </summary>
     [HttpPost("loadByPageFromItemName")]
-    public async Task<ResLoadAuctionPageDTO> LoadItemListByPageFromItemName(ReqLoadAuctionPageDTO request)
+    public async Task<ResLoadAuctionPageDTO> LoadAuctionListByPageFromItemName(ReqLoadAuctionPageDTO request)
     {
-        (var errorCode, var itemList) = await _auctionService.GetItemListByPageFromItemName(request.Page, request.ItemName, request.MinPrice, request.MaxPrice, request.SortBy, request.SortOrder);
+        (var errorCode, var itemList) = await _auctionService.GetAuctionListByPageFromItemName(request.Page, request.ItemName, request.MinPrice, request.MaxPrice, request.SortBy, request.SortOrder);
 
         return new ResLoadAuctionPageDTO() { Result = errorCode, ItemList = itemList };
     }
 
-    ///// <summary>
-    ///// 경매 물품 상세 정보 조회 API <br/>
-    ///// 클라이언트가 요청한 경매 물품 정보를 반환합니다.
-    ///// </summary>
-    //[HttpPost("loadAuctionItem")]
-    //public async Task<ResLoadAuctionItemDTO> LoadAuctionItem(ReqLoadAuctionItemDTO request)
-    //{
+    /// <summary>
+    /// 경매 물품 조회 API <br/>
+    /// 클라이언트가 요청한 경매 물품에 관한 통계 정보를 반환합니다.
+    /// </summary>
+    [HttpPost("loadAuctionItemStatistic")]
+    public async Task<ResLoadAuctionItemStatisticDTO> LoadAuctionItemStatistics(ReqLoadAuctionItemStatisticDTO request)
+    {
+        (var errorCode, var auctionStatistic) = await _auctionService.GetAuctionItemStatistic(request.ItemCode);
 
-    //}
+        return new ResLoadAuctionItemStatisticDTO() { Result = errorCode, AuctionStatistic = auctionStatistic };
+    }
 
 
     /// <summary>
@@ -80,11 +82,23 @@ public class AuctionController : ControllerBase
     /// 클라이언트가 요청한 아이템을 경매장에 등록합니다.
     /// 최소 입찰가, 즉시 구매가가 설정되어야합니다.
     /// </summary>
-    [HttpPost("registerAuctionItem")]
+    [HttpPost("registerAuction")]
     public async Task<ResRegisterAuctionDTO> RegisterAuction(ReqRegisterAuctionDTO request)
     {
-        var errorCode = await _auctionService.RegisterAuction(request.ItemId, request.BidPrice, request.BuyNowPrice);
+        var errorCode = await _auctionService.RegisterAuction(request.UserID, request.ItemId, request.BidPrice, request.BuyNowPrice);
 
         return new ResRegisterAuctionDTO() { Result = errorCode };
+    }
+
+    /// <summary>
+    /// 경매장 물품 등록 취소 API <br/>
+    /// 경매장에 등록되어있던 물품을 회수합니다.
+    /// </summary>
+    [HttpPost("cancleAuction")]
+    public async Task<ResCancleAuctionDTO> CancleAuction(ReqCancleAuctionDTO request)
+    {
+        (var errorCode, var item) = await _auctionService.CancleAuction(request.UserID, request.AuctionID);
+
+        return new ResCancleAuctionDTO() { Result = errorCode, UserItem = item };
     }
 }

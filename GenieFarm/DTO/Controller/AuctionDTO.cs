@@ -24,6 +24,17 @@ public class ResLoadAuctionPageDTO : ErrorCodeDTO
     public List<AuctionModel>? ItemList { get; set; }
 }
 
+// LoadAuctionItemStatistic : 경매장 물품 통계 조회
+public class ReqLoadAuctionItemStatisticDTO : InGameDTO
+{
+    public Int64 ItemCode { get; set; }
+}
+
+public class ResLoadAuctionItemStatisticDTO : ErrorCodeDTO
+{
+    public AuctionStatisticModel? AuctionStatistic { get; set; }
+}
+
 // BidAuction : 경매 물품 입찰 참여
 
 public class ReqBidAuctionDTO : InGameDTO
@@ -64,4 +75,16 @@ public class ReqRegisterAuctionDTO : InGameDTO
 public class ResRegisterAuctionDTO : ErrorCodeDTO
 {
     
+}
+
+// CancleAuction : 경매장 물품 등록 취소
+
+public class ReqCancleAuctionDTO : InGameDTO
+{
+    public Int64 AuctionID { get; set; }
+}
+
+public class ResCancleAuctionDTO : ErrorCodeDTO
+{
+    public UserItemModel UserItem { get; set; }
 }

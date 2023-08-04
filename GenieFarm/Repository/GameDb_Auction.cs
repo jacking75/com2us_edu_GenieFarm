@@ -11,38 +11,25 @@ using System.Globalization;
 
 public partial class GameDb : IGameDb
 {
-    public async Task<Tuple<ErrorCode, List<AuctionModel>>> GetAuctionListByTypeCode(Int32 page, Int32 typeCode, Int32 minPrice, Int32 maxPrice, string? sortBy, string? sortOrder)
+    public async Task<List<AuctionModel>> GetAuctionListByTypeCode(Int32 page, Int32 typeCode, Int32 minPrice, Int32 maxPrice, string? sortBy, string? sortOrder)
     {
-        // 올바른 TypeCode인지 확인
-        var itemType = _masterDb._itemTypeList.Find(x => x.TypeCode == typeCode);
-        if (itemType == null)
-        {
-            return new(ErrorCode.AuctionService_GetItemListByPageFromTypeCode_InvalidTypeCode, new List<AuctionModel>());
-        }
 
         var query = _queryFactory.Query("auction_info")
                                  .Where("TypeCode", typeCode);
 
         SetGetItemListQuery(ref query, page, minPrice, maxPrice, sortBy, sortOrder);
 
-        return new(ErrorCode.None, (await query.GetAsync<AuctionModel>()).ToList());
+        return (await query.GetAsync<AuctionModel>()).ToList();
     }
 
-    public async Task<Tuple<ErrorCode, List<AuctionModel>>> GetAuctionListByItemName(Int32 page, string itemName, Int32 minPrice, Int32 maxPrice, string? sortBy, string? sortOrder)
+    public async Task<List<AuctionModel>> GetAuctionListByItemName(Int32 page, Int64 itemCode, Int32 minPrice, Int32 maxPrice, string? sortBy, string? sortOrder)
     {
-        // 올바른 itemName인지 확인
-        var item = _masterDb._itemAttributeList.Find(x => x.Name == itemName);
-        if (item == null)
-        {
-            return new(ErrorCode.AuctionService_GetItemListByPageFromItemName_InvalidItemName, new List<AuctionModel>());
-        }
-
         var query = _queryFactory.Query("auction_info")
-                                 .Where("ItemCode", item.Code);
+                                 .Where("ItemCode", itemCode);
 
         SetGetItemListQuery(ref query, page, minPrice, maxPrice, sortBy, sortOrder);
 
-        return new(ErrorCode.None, (await query.GetAsync<AuctionModel>()).ToList());
+        return (await query.GetAsync<AuctionModel>()).ToList();
     }
 
     void SetGetItemListQuery(ref Query query, Int32 page, Int32 minPrice, Int32 maxPrice, string? sortBy, string? sortOrder)
@@ -51,6 +38,9 @@ public partial class GameDb : IGameDb
 
         query.Where("IsPurchased", false)
              .Where("ExpiredAt", ">", DateTime.Now);
+
+        minPrice = minPrice == 0 ? 0 : minPrice;
+        maxPrice = maxPrice == 0 ? Int32.MaxValue : maxPrice;
 
         switch (sortBy)
         {
@@ -76,27 +66,44 @@ public partial class GameDb : IGameDb
              .Limit(itemPerPage);
     }
 
-    public async Task<Tuple<Int64, Int64>> GetAuctionPriceInfo(Int64 auctionId)
-    { 
-        var result = await _queryFactory.Query("auction_info")
-                                   .Where("AuctionId", auctionId)
-                                   .Where("IsPurchsed", false)
-                                   .Select("CurBidPrice", "BuyNowPrice")
-                                   .FirstOrDefaultAsync();
+    public async Task<AuctionStatisticModel> GetAuctionItemStatistic(Int64 ItemCode)
+    {
+        var auctionStatistic = new AuctionStatisticModel();
 
-        return new Tuple<Int64, Int64>(result.CurBidPrice, result.BuyNowPrice);
+        auctionStatistic.AvgBidPrice = await _queryFactory.Query("auction_info")
+                                                          .Where("ItemCode", ItemCode)
+                                                          .Where("ExpiredAt", ">", DateTime.Now.AddDays(-7))
+                                                          .Where("IsPurchased", true)
+                                                          .AverageAsync<Int32>("CurBidPrice");
+
+        auctionStatistic.MinBidPrice = await _queryFactory.Query("auction_info")
+                                                          .Where("ItemCode", ItemCode)
+                                                          .Where("IsPurchased", false)
+                                                          .MinAsync<Int32>("CurBidPrice");
+
+        auctionStatistic.AvgBuyNowPrice = await _queryFactory.Query("auction_info")
+                                                             .Where("ItemCode", ItemCode)
+                                                             .Where("ExpiredAt", ">", DateTime.Now.AddDays(-7))
+                                                             .Where("IsPurchased", true)
+                                                             .AverageAsync<Int32>("BuyNowPrice");
+
+        auctionStatistic.MinBuyNowPrice = await _queryFactory.Query("auction_info")
+                                                             .Where("ItemCode", ItemCode)
+                                                             .Where("IsPurchased", false)
+                                                             .MinAsync<Int32>("BuyNowPrice");
+
+        return auctionStatistic;
     }
 
-    public async Task<Int32> GetAuctionBuyNowPrice(Int64 auctionId)
+    public async Task<AuctionModel> GetAuctionInfo(Int64 auctionId)
     {
         return (await _queryFactory.Query("auction_info")
                                    .Where("AuctionId", auctionId)
-                                   .Where("IsPurcahsed", false)
-                                   .Select("BuyNowPrice")
-                                   .FirstOrDefaultAsync<Int32>());
+                                   .Where("IsPurchased", false)
+                                   .FirstOrDefaultAsync<AuctionModel>());
     }
 
-    public async Task<Int32> DecrementUserMoney(Int64 userId, Int32 bidPrice)
+    public async Task<Int32> DecreaseUserMoney(Int64 userId, Int32 bidPrice)
     {
         return (await _queryFactory.Query("farm_info")
                                    .Where("UserId", userId)
@@ -104,10 +111,11 @@ public partial class GameDb : IGameDb
                                    .DecrementAsync("Money", bidPrice));
     }
 
-    public async Task<Int32> UpdateAuctionBidInfo(Int64 auctionId, Int64 userId, Int32 bidPrice)
+    public async Task<Int32> UpdateAuctionBidInfo(Int64 auctionId, Int64 userId, Int32 beforeBidPrice, Int32 bidPrice)
     {
         return (await _queryFactory.Query("auction_info")
                                    .Where("AuctionId", auctionId)
+                                   .Where("CurBidPrice", beforeBidPrice)
                                    .UpdateAsync(new { BidderId = userId, CurBidPrice = bidPrice }));
     }
 
@@ -119,15 +127,6 @@ public partial class GameDb : IGameDb
                                    .UpdateAsync(new { IsPurchased = true }));
     }
 
-    public async Task<UserItemModel> GetAuctionItem(Int64 auctionId)
-    {
-        return (await _queryFactory.Query("auction_info")
-                                   .Where("AuctionId", auctionId)
-                                   .Where("IsPurchased", false)
-                                   .Select("ItemId", "ItemCode", "ItemCount")
-                                   .FirstOrDefaultAsync<UserItemModel>());
-    }
-
     public async Task<Int32> InsertAuctionItemToUser(Int64 userId, UserItemModel item)
     {
         return (await _queryFactory.Query("user_item")
@@ -137,15 +136,51 @@ public partial class GameDb : IGameDb
                                                       ItemCount = item.ItemCount }));
     }
 
-    public async Task<Int32> InsertUserItemToAuction(UserItemModel item, Int16 typeCode, Int32 bidPrice, Int32 buyNowPrice)
+    public async Task<UserItemModel> GetUserItem(Int64 userId, Int64 itemId)
     {
-        return (await _queryFactory.Query("auction_ifno")
+        return (await _queryFactory.Query("user_item")
+                                   .Where("UserId", userId)
+                                   .Where("ItemId", itemId)
+                                   .FirstOrDefaultAsync<UserItemModel>());   
+    }
+
+    public async Task<Int32> DeleteUserItem(Int64 userId, Int64 itemId)
+    {
+        return (await _queryFactory.Query("user_Item")
+                                   .Where("UserId", userId)
+                                   .Where("ItemId", itemId)
+                                   .DeleteAsync());
+    }
+
+
+    public async Task<Int32> InsertAuction(UserItemModel item, Int16 typeCode, string itemName, Int32 bidPrice, Int32 buyNowPrice)
+    {
+        return (await _queryFactory.Query("auction_info")
                                    .InsertAsync(new { SellerId = item.UserID,
+                                                      ItemName = itemName,
                                                       ItemId = item.ItemID,
                                                       ItemCode = item.ItemCode,
                                                       ItemCount = item.ItemCount,
                                                       TypeCode = typeCode,
-                                                      BidPrice = bidPrice,
+                                                      CurBidPrice = bidPrice,
                                                       BuyNowPrice = buyNowPrice }));
+    }
+
+    public async Task<Int32> DeleteAuctionInfo(Int64 userId, Int64 auctionId)
+    {
+        return (await _queryFactory.Query("auction_info")
+                                   .Where("AuctionId", auctionId)
+                                   .Where("SellerId", userId)
+                                   .Where("IsPurchased", false)
+                                   .DeleteAsync());
+    }
+
+    public async Task<Int32> InsertUserItem(Int64 userId, UserItemModel item)
+    {
+        return (await _queryFactory.Query("user_item")
+                                   .InsertAsync(new { UserId = userId,
+                                                      ItemId = item.ItemID,
+                                                      ItemCode = item.ItemCode,
+                                                      ItemCount = item.ItemCount }));
     }
 }
