@@ -8,7 +8,6 @@ using ZLogger;
 
 [ApiController]
 [Route("api/auth")]
-
 public class AuthCheckController : ControllerBase
 {
     ILogger<AuthCheckController> _logger;
